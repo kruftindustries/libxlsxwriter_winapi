@@ -315,6 +315,24 @@ lxw_ct_add_chart_name(lxw_content_types *self, const char *name)
 }
 
 /*
+ * Add the name of a chart style to the ContentTypes overrides.
+ */
+void
+lxw_ct_add_chart_style_name(lxw_content_types *self, const char *name)
+{
+    lxw_ct_add_override(self, name, "application/vnd.ms-office.chartstyle+xml");
+}
+
+/*
+ * Add the name of a chart color style to the ContentTypes overrides.
+ */
+void
+lxw_ct_add_chart_colors_name(lxw_content_types *self, const char *name)
+{
+    lxw_ct_add_override(self, name, "application/vnd.ms-office.chartcolorstyle+xml");
+}
+
+/*
  * Add the name of a drawing to the ContentTypes overrides.
  */
 void

@@ -52,6 +52,10 @@ void lxw_ct_add_chartsheet_name(lxw_content_types *content_types,
                                 const char *name);
 void lxw_ct_add_chart_name(lxw_content_types *content_types,
                            const char *name);
+void lxw_ct_add_chart_style_name(lxw_content_types *content_types,
+                                 const char *name);
+void lxw_ct_add_chart_colors_name(lxw_content_types *content_types,
+                                  const char *name);
 void lxw_ct_add_drawing_name(lxw_content_types *content_types,
                              const char *name);
 void lxw_ct_add_table_name(lxw_content_types *content_types,
