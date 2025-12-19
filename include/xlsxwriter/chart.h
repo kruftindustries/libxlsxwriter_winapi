@@ -1025,6 +1025,9 @@ typedef enum lxw_chart_trendline_type {
     LXW_CHART_TRENDLINE_TYPE_AVERAGE
 } lxw_chart_trendline_type;
 
+/* Forward declaration for lxw_chart_axis. */
+struct lxw_chart_axis;
+
 /**
  * @brief Struct to represent an Excel chart data series.
  *
@@ -1037,6 +1040,7 @@ typedef struct lxw_chart_series {
     lxw_series_range *categories;
     lxw_series_range *values;
     lxw_chart_title title;
+    struct lxw_chart_axis *y_axis;
     lxw_chart_line *line;
     lxw_chart_fill *fill;
     lxw_chart_pattern *pattern;
@@ -1184,6 +1188,12 @@ typedef struct lxw_chart {
      * that configures the Y axis.
      */
     lxw_chart_axis *y_axis;
+
+    /**
+     * A pointer to the chart y2_axis object which can be used in functions
+     * that configure the secondary Y axis.
+     */
+    lxw_chart_axis *y2_axis;
 
     lxw_chart_title title;
 
@@ -1353,6 +1363,43 @@ void lxw_chart_assemble_xml_file(lxw_chart *chart);
 lxw_chart_series *chart_add_series(lxw_chart *chart,
                                    const char *categories,
                                    const char *values);
+
+/**
+ * @brief Add a data series to a chart on a specified Y-axis.
+ *
+ * @param chart      Pointer to a lxw_chart instance to be configured.
+ * @param categories The range of categories in the data series.
+ * @param values     The range of values in the data series.
+ * @param y_axis     Pointer to Y-axis (chart->y_axis, chart->y2_axis, or NULL for primary).
+ *
+ * @return A lxw_chart_series object pointer.
+ *
+ * This function works the same as chart_add_series() but allows you to specify
+ * which Y-axis the series should be plotted against. This is useful when you
+ * want to plot series with different scales on the same chart.
+ *
+ * @code
+ *     // Add series to secondary Y-axis (right side)
+ *     chart_add_series_on_axis(chart, "=Sheet1!$A$2:$A$7",
+ *                              "=Sheet1!$C$2:$C$7", chart->y2_axis);
+ *
+ *     // Add series to primary Y-axis (left side)
+ *     chart_add_series_on_axis(chart, "=Sheet1!$A$2:$A$7",
+ *                              "=Sheet1!$B$2:$B$7", chart->y_axis);
+ *
+ *     // Configure the secondary Y-axis
+ *     chart_axis_set_name(chart->y2_axis, "Secondary Axis");
+ * @endcode
+ *
+ * Pass NULL for y_axis to use the primary Y-axis (chart->y_axis).
+ *
+ * Note: Not all chart types support secondary axes. Pie, doughnut, and radar
+ * charts will return NULL if you attempt to add a series to a secondary axis.
+ */
+lxw_chart_series *chart_add_series_on_axis(lxw_chart *chart,
+                                           const char *categories,
+                                           const char *values,
+                                           lxw_chart_axis *y_axis);
 
 /**
  * @brief Set a series "categories" range using row and column values.

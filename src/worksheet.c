@@ -3007,15 +3007,13 @@ _worksheet_position_object_pixels(lxw_worksheet *self,
         height = height + y1;
 
     /* Subtract the underlying cell widths to find the end cell. */
-    while (width >= _worksheet_size_col(self, col_end, anchor)
-           && col_end < LXW_COL_MAX) {
+    while (width >= _worksheet_size_col(self, col_end, anchor)) {
         width -= _worksheet_size_col(self, col_end, anchor);
         col_end++;
     }
 
     /* Subtract the underlying cell heights to find the end cell. */
-    while (height >= _worksheet_size_row(self, row_end, anchor)
-           && row_end < LXW_ROW_MAX) {
+    while (height >= _worksheet_size_row(self, row_end, anchor)) {
         height -= _worksheet_size_row(self, row_end, anchor);
         row_end++;
     }
@@ -8334,9 +8332,9 @@ worksheet_write_datetime(lxw_worksheet *self,
     if (err)
         return err;
 
-    err = lxw_datetime_validate(datetime);
-    if (err)
-        return err;
+    printf("worksheet_write_datetime(): %d-%02d-%02d - 1904: %d\n",
+           datetime->year, datetime->month, datetime->day,
+           self->use_1904_epoch);
 
     excel_date =
         lxw_datetime_to_excel_date_with_epoch(datetime, self->use_1904_epoch);
@@ -9795,12 +9793,6 @@ worksheet_set_page_view(lxw_worksheet *self)
 void
 worksheet_set_paper(lxw_worksheet *self, uint8_t paper_size)
 {
-    if (paper_size > 118) {
-        LXW_WARN_FORMAT1("worksheet_set_paper(): invalid paper size: %d. "
-                         "Valid range is 0-118", paper_size);
-        return;
-    }
-
     self->paper_size = paper_size;
     self->page_setup_changed = LXW_TRUE;
 }

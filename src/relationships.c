@@ -246,6 +246,25 @@ lxw_add_worksheet_relationship(lxw_relationships *self, const char *type,
 }
 
 /*
+ * Add chart style and color relationships to chart .rels xml files.
+ */
+void
+lxw_add_chart_style_relationship(lxw_relationships *self)
+{
+    _add_relationship(self,
+                      "http://schemas.microsoft.com/office/2011/relationships/",
+                      "chartStyle", "style1.xml", NULL);
+}
+
+void
+lxw_add_chart_color_relationship(lxw_relationships *self)
+{
+    _add_relationship(self,
+                      "http://schemas.microsoft.com/office/2011/relationships/",
+                      "chartColorStyle", "colors1.xml", NULL);
+}
+
+/*
  * Add a richValue relationship to sheet .rels xml files.
  */
 void

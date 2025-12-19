@@ -19,6 +19,7 @@
 STATIC void _chart_initialize(lxw_chart *self, uint8_t type);
 STATIC void _chart_axis_set_default_num_format(lxw_chart_axis *axis,
                                                char *num_format);
+STATIC uint8_t _chart_has_secondary_y_axis(lxw_chart *self);
 
 /*****************************************************************************
  *
@@ -215,6 +216,7 @@ lxw_chart_free(lxw_chart *chart)
     /* X and Y Axis. */
     _chart_free_axis(chart->x_axis);
     _chart_free_axis(chart->y_axis);
+    _chart_free_axis(chart->y2_axis);
 
     /* Chart title. */
     _chart_free_font(chart->title.font);
@@ -270,6 +272,9 @@ lxw_chart_new(uint8_t type)
     chart->y_axis = calloc(1, sizeof(struct lxw_chart_axis));
     GOTO_LABEL_ON_MEM_ERROR(chart->y_axis, mem_error);
 
+    chart->y2_axis = calloc(1, sizeof(struct lxw_chart_axis));
+    GOTO_LABEL_ON_MEM_ERROR(chart->y2_axis, mem_error);
+
     chart->title.range = calloc(1, sizeof(lxw_series_range));
     GOTO_LABEL_ON_MEM_ERROR(chart->title.range, mem_error);
 
@@ -278,6 +283,9 @@ lxw_chart_new(uint8_t type)
 
     chart->y_axis->title.range = calloc(1, sizeof(lxw_series_range));
     GOTO_LABEL_ON_MEM_ERROR(chart->y_axis->title.range, mem_error);
+
+    chart->y2_axis->title.range = calloc(1, sizeof(lxw_series_range));
+    GOTO_LABEL_ON_MEM_ERROR(chart->y2_axis->title.range, mem_error);
 
     /* Initialize the ranges in the chart titles. */
     if (_chart_init_data_cache(chart->title.range) != LXW_NO_ERROR)
@@ -289,6 +297,9 @@ lxw_chart_new(uint8_t type)
     if (_chart_init_data_cache(chart->y_axis->title.range) != LXW_NO_ERROR)
         goto mem_error;
 
+    if (_chart_init_data_cache(chart->y2_axis->title.range) != LXW_NO_ERROR)
+        goto mem_error;
+
     chart->type = type;
     chart->style_id = 2;
     chart->hole_size = 50;
@@ -296,13 +307,19 @@ lxw_chart_new(uint8_t type)
     /* Set the default axis positions. */
     chart->x_axis->axis_position = LXW_CHART_AXIS_BOTTOM;
     chart->y_axis->axis_position = LXW_CHART_AXIS_LEFT;
+    chart->y2_axis->axis_position = LXW_CHART_AXIS_RIGHT;
+
+    /* Set the default axis label positions. */
+    chart->y2_axis->label_position = LXW_CHART_AXIS_LABEL_POSITION_HIGH;
 
     /* Set the default axis number formats. */
     _chart_axis_set_default_num_format(chart->x_axis, "General");
     _chart_axis_set_default_num_format(chart->y_axis, "General");
+    _chart_axis_set_default_num_format(chart->y2_axis, "General");
 
     chart->x_axis->major_gridlines.visible = LXW_FALSE;
     chart->y_axis->major_gridlines.visible = LXW_TRUE;
+    chart->y2_axis->major_gridlines.visible = LXW_FALSE;
 
     chart->has_horiz_cat_axis = LXW_FALSE;
     chart->has_horiz_val_axis = LXW_TRUE;
@@ -569,6 +586,8 @@ _chart_add_axis_ids(lxw_chart *self)
 
     self->axis_id_1 = chart_id + axis_count;
     self->axis_id_2 = self->axis_id_1 + 1;
+    self->axis_id_3 = self->axis_id_1 + 2;  /* Secondary X-axis (hidden) */
+    self->axis_id_4 = self->axis_id_1 + 3;  /* Secondary Y-axis */
 }
 
 /*
@@ -633,11 +652,13 @@ _chart_write_chart_space(lxw_chart *self)
     char xmlns_c[] = LXW_SCHEMA_DRAWING "/chart";
     char xmlns_a[] = LXW_SCHEMA_DRAWING "/main";
     char xmlns_r[] = LXW_SCHEMA_OFFICEDOC "/relationships";
+    char xmlns_c16r2[] = "http://schemas.microsoft.com/office/drawing/2015/06/chart";
 
     LXW_INIT_ATTRIBUTES();
     LXW_PUSH_ATTRIBUTES_STR("xmlns:c", xmlns_c);
     LXW_PUSH_ATTRIBUTES_STR("xmlns:a", xmlns_a);
     LXW_PUSH_ATTRIBUTES_STR("xmlns:r", xmlns_r);
+    LXW_PUSH_ATTRIBUTES_STR("xmlns:c16r2", xmlns_c16r2);
 
     lxw_xml_start_tag(self->file, "c:chartSpace", &attributes);
 
@@ -662,24 +683,77 @@ _chart_write_lang(lxw_chart *self)
 }
 
 /*
- * Write the <c:style> element.
+ * Write the <c:date1904> element.
  */
 STATIC void
-_chart_write_style(lxw_chart *self)
+_chart_write_date1904(lxw_chart *self)
 {
     struct xml_attribute_list attributes;
     struct xml_attribute *attribute;
 
-    /* Don"t write an element for the default style, 2. */
-    if (self->style_id == 2)
-        return;
+    LXW_INIT_ATTRIBUTES();
+    LXW_PUSH_ATTRIBUTES_INT("val", 0);
+    lxw_xml_empty_tag(self->file, "c:date1904", &attributes);
+    LXW_FREE_ATTRIBUTES();
+}
+
+/*
+ * Write the <c:roundedCorners> element.
+ */
+STATIC void
+_chart_write_rounded_corners(lxw_chart *self)
+{
+    struct xml_attribute_list attributes;
+    struct xml_attribute *attribute;
 
     LXW_INIT_ATTRIBUTES();
-    LXW_PUSH_ATTRIBUTES_INT("val", self->style_id);
-
-    lxw_xml_empty_tag(self->file, "c:style", &attributes);
-
+    LXW_PUSH_ATTRIBUTES_INT("val", 0);
+    lxw_xml_empty_tag(self->file, "c:roundedCorners", &attributes);
     LXW_FREE_ATTRIBUTES();
+}
+
+/*
+ * Write the <mc:AlternateContent> element with style references.
+ */
+STATIC void
+_chart_write_style_alternate_content(lxw_chart *self)
+{
+    struct xml_attribute_list attributes;
+    struct xml_attribute *attribute;
+
+    /* Write AlternateContent for compatibility */
+    LXW_INIT_ATTRIBUTES();
+    LXW_PUSH_ATTRIBUTES_STR("xmlns:mc", "http://schemas.openxmlformats.org/markup-compatibility/2006");
+    lxw_xml_start_tag(self->file, "mc:AlternateContent", &attributes);
+    LXW_FREE_ATTRIBUTES();
+
+    /* Write Choice element for modern Excel (2013+) */
+    LXW_INIT_ATTRIBUTES();
+    LXW_PUSH_ATTRIBUTES_STR("xmlns:c14", "http://schemas.microsoft.com/office/drawing/2007/8/2/chart");
+    LXW_PUSH_ATTRIBUTES_STR("Requires", "c14");
+    lxw_xml_start_tag(self->file, "mc:Choice", &attributes);
+    LXW_FREE_ATTRIBUTES();
+
+    /* Write modern style reference */
+    LXW_INIT_ATTRIBUTES();
+    LXW_PUSH_ATTRIBUTES_INT("val", 102);
+    lxw_xml_empty_tag(self->file, "c14:style", &attributes);
+    LXW_FREE_ATTRIBUTES();
+
+    lxw_xml_end_tag(self->file, "mc:Choice");
+
+    /* Write Fallback element for older Excel */
+    lxw_xml_start_tag(self->file, "mc:Fallback", NULL);
+
+    /* Write fallback style reference */
+    LXW_INIT_ATTRIBUTES();
+    LXW_PUSH_ATTRIBUTES_INT("val", 2);
+    lxw_xml_empty_tag(self->file, "c:style", &attributes);
+    LXW_FREE_ATTRIBUTES();
+
+    lxw_xml_end_tag(self->file, "mc:Fallback");
+
+    lxw_xml_end_tag(self->file, "mc:AlternateContent");
 }
 
 /*
@@ -2093,6 +2167,11 @@ _chart_write_axis_ids(lxw_chart *self)
 
     _chart_write_axis_id(self, self->axis_id_1);
     _chart_write_axis_id(self, self->axis_id_2);
+
+    /* If secondary Y-axis is in use, include its ID as well */
+    if (_chart_has_secondary_y_axis(self)) {
+        _chart_write_axis_id(self, self->axis_id_4);
+    }
 }
 
 /*
@@ -3194,6 +3273,26 @@ _chart_write_y_val(lxw_chart *self, lxw_chart_series *series)
 }
 
 /*
+ * Write the <c:axId> elements for a series.
+ */
+STATIC void
+_chart_write_series_axis_ids(lxw_chart *self, lxw_chart_series *series)
+{
+    uint32_t y_axis_id;
+
+    /* Determine which Y-axis this series uses. */
+    if (series->y_axis == self->y2_axis) {
+        y_axis_id = self->axis_id_4;
+    }
+    else {
+        y_axis_id = self->axis_id_2;  /* Primary or NULL defaults to primary. */
+    }
+
+    _chart_write_axis_id(self, self->axis_id_1);  /* X-axis */
+    _chart_write_axis_id(self, y_axis_id);        /* Y-axis */
+}
+
+/*
  * Write the <c:ser> element.
  */
 STATIC void
@@ -3244,6 +3343,15 @@ _chart_write_ser(lxw_chart *self, lxw_chart_series *series)
         || self->chart_group == LXW_CHART_LINE)
         _chart_write_smooth(self, series->smooth);
 
+    /* REMOVED: Axis IDs should not be written inside series elements.
+     * They belong at the chart type level only (e.g., inside lineChart).
+     */
+    /*
+    if (_chart_has_secondary_y_axis(self)) {
+        _chart_write_series_axis_ids(self, series);
+    }
+    */
+
     lxw_xml_end_tag(self->file, "c:ser");
 }
 
@@ -3293,6 +3401,15 @@ _chart_write_xval_ser(lxw_chart *self, lxw_chart_series *series)
 
     /* Write the c:smooth element. */
     _chart_write_smooth(self, series->smooth);
+
+    /* REMOVED: Axis IDs should not be written inside series elements.
+     * They belong at the chart type level only (e.g., inside scatterChart).
+     */
+    /*
+    if (_chart_has_secondary_y_axis(self)) {
+        _chart_write_series_axis_ids(self, series);
+    }
+    */
 
     lxw_xml_end_tag(self->file, "c:ser");
 }
@@ -4511,6 +4628,121 @@ _chart_write_val_axis(lxw_chart *self)
 }
 
 /*
+ * Write the <c:valAx> element for secondary Y-axis.
+ */
+STATIC void
+_chart_write_val_axis_secondary(lxw_chart *self)
+{
+    lxw_xml_start_tag(self->file, "c:valAx", NULL);
+
+    _chart_write_axis_id(self, self->axis_id_4);
+
+    /* Write the c:scaling element. */
+    _chart_write_scaling(self,
+                         self->y2_axis->reverse,
+                         self->y2_axis->has_min, self->y2_axis->min,
+                         self->y2_axis->has_max, self->y2_axis->max,
+                         self->y2_axis->log_base);
+
+    /* Write the c:delete element to hide axis. */
+    if (self->y2_axis->hidden)
+        _chart_write_delete(self);
+
+    /* Write the c:axPos element. Secondary Y-axis should be on the right. */
+    _chart_write_axis_pos(self, LXW_CHART_AXIS_LEFT, self->x_axis->reverse);
+
+    /* Write the c:majorGridlines element. */
+    _chart_write_major_gridlines(self, self->y2_axis);
+
+    /* Write the c:minorGridlines element. */
+    _chart_write_minor_gridlines(self, self->y2_axis);
+
+    /* Write the axis title elements. */
+    self->y2_axis->title.is_horizontal = self->has_horiz_val_axis;
+    _chart_write_title(self, &self->y2_axis->title);
+
+    /* Write the c:numFmt element. */
+    _chart_write_number_format(self, self->y2_axis);
+
+    /* Write the c:majorTickMark element. */
+    _chart_write_major_tick_mark(self, self->y2_axis);
+
+    /* Write the c:minorTickMark element. */
+    _chart_write_minor_tick_mark(self, self->y2_axis);
+
+    /* Write the c:tickLblPos element. Force HIGH for secondary Y-axis. */
+    self->y2_axis->label_position = LXW_CHART_AXIS_LABEL_POSITION_HIGH;
+    _chart_write_tick_label_pos(self, self->y2_axis);
+
+    /* Write the c:spPr element for the axis line. */
+    _chart_write_sp_pr(self, self->y2_axis->line, self->y2_axis->fill,
+                       self->y2_axis->pattern);
+
+    /* Write the axis font elements. */
+    _chart_write_axis_font(self, self->y2_axis->num_font);
+
+    /* Write the c:crossAx element. */
+    _chart_write_cross_axis(self, self->axis_id_1);
+
+    /* Write the c:crosses element. */
+    if (!self->x_axis->has_crossing || self->x_axis->crossing_min
+        || self->x_axis->crossing_max)
+        _chart_write_crosses(self, self->x_axis);
+    else
+        _chart_write_crosses_at(self, self->x_axis);
+
+    /* Write the c:crossBetween element. */
+    _chart_write_cross_between(self, self->x_axis->position_axis);
+
+    /* Write the c:majorUnit element. */
+    _chart_write_major_unit(self, self->y2_axis);
+
+    /* Write the c:minorUnit element. */
+    _chart_write_minor_unit(self, self->y2_axis);
+
+    /* Write the c:dispUnits element. */
+    _chart_write_disp_units(self, self->y2_axis);
+
+    lxw_xml_end_tag(self->file, "c:valAx");
+}
+
+/*
+ * Write the hidden secondary <c:catAx> element for secondary Y-axis charts.
+ */
+STATIC void
+_chart_write_cat_axis_secondary(lxw_chart *self)
+{
+    lxw_xml_start_tag(self->file, "c:catAx", NULL);
+
+    _chart_write_axis_id(self, self->axis_id_3);
+
+    /* Write the c:scaling element. */
+    _chart_write_scaling(self,
+                         self->x_axis->reverse,
+                         self->x_axis->has_min, self->x_axis->min,
+                         self->x_axis->has_max, self->x_axis->max,
+                         self->x_axis->log_base);
+
+    /* Hide this axis (it's only needed for the second chart element) */
+    _chart_write_delete(self);
+
+    /* Write the c:axPos element. */
+    _chart_write_axis_pos(self, self->x_axis->axis_position,
+                          self->y_axis->reverse);
+
+    /* Write the c:tickLblPos element. */
+    _chart_write_tick_label_pos(self, self->x_axis);
+
+    /* Write the c:crossAx element - crosses the secondary Y-axis. */
+    _chart_write_cross_axis(self, self->axis_id_4);
+
+    /* Write the c:crossBetween element. */
+    _chart_write_cross_between(self, self->y_axis->position_axis);
+
+    lxw_xml_end_tag(self->file, "c:catAx");
+}
+
+/*
  * Write the <c:valAx> element. This is for the second valAx in scatter plots.
  */
 STATIC void
@@ -4590,6 +4822,52 @@ _chart_write_cat_val_axis(lxw_chart *self)
 }
 
 /*
+ * Write the hidden secondary <c:valAx> element for scatter charts with secondary Y-axis.
+ * This is the hidden secondary X-axis (valAx) for the second scatter chart element.
+ */
+STATIC void
+_chart_write_cat_val_axis_secondary(lxw_chart *self)
+{
+    lxw_xml_start_tag(self->file, "c:valAx", NULL);
+
+    _chart_write_axis_id(self, self->axis_id_3);
+
+    /* Write the c:scaling element. */
+    _chart_write_scaling(self,
+                         self->x_axis->reverse,
+                         self->x_axis->has_min, self->x_axis->min,
+                         self->x_axis->has_max, self->x_axis->max,
+                         self->x_axis->log_base);
+
+    /* Hide this axis (it's only needed for the second chart element) */
+    _chart_write_delete(self);
+
+    /* Write the c:axPos element. */
+    _chart_write_axis_pos(self, self->x_axis->axis_position,
+                          self->y_axis->reverse);
+
+    /* Write the c:numFmt element. */
+    _chart_write_number_format(self, self->x_axis);
+
+    /* Write the c:majorTickMark element. */
+    _chart_write_major_tick_mark(self, self->x_axis);
+
+    /* Write the c:minorTickMark element. */
+    _chart_write_minor_tick_mark(self, self->x_axis);
+
+    /* Write the c:tickLblPos element. */
+    _chart_write_tick_label_pos(self, self->x_axis);
+
+    /* Write the c:crossAx element - crosses the secondary Y-axis. */
+    _chart_write_cross_axis(self, self->axis_id_4);
+
+    /* Write the c:crossBetween element. */
+    _chart_write_cross_between(self, self->y_axis->position_axis);
+
+    lxw_xml_end_tag(self->file, "c:valAx");
+}
+
+/*
  * Write the <c:barDir> element.
  */
 STATIC void
@@ -4613,24 +4891,67 @@ STATIC void
 _chart_write_area_chart(lxw_chart *self)
 {
     lxw_chart_series *series;
+    uint8_t has_secondary = _chart_has_secondary_y_axis(self);
 
-    lxw_xml_start_tag(self->file, "c:areaChart", NULL);
+    if (has_secondary) {
+        /* Write first areaChart for primary Y-axis series */
+        lxw_xml_start_tag(self->file, "c:areaChart", NULL);
 
-    /* Write the c:grouping element. */
-    _chart_write_grouping(self, self->grouping);
+        /* Write the c:grouping element. */
+        _chart_write_grouping(self, self->grouping);
 
-    STAILQ_FOREACH(series, self->series_list, list_pointers) {
-        /* Write the c:ser element. */
-        _chart_write_ser(self, series);
+        STAILQ_FOREACH(series, self->series_list, list_pointers) {
+            /* Only write series that use primary Y-axis (or unspecified) */
+            if (series->y_axis != self->y2_axis) {
+                _chart_write_ser(self, series);
+            }
+        }
+
+        /* Write the c:axId elements for primary chart (axes 1 and 2) */
+        _chart_write_axis_id(self, self->axis_id_1);
+        _chart_write_axis_id(self, self->axis_id_2);
+
+        lxw_xml_end_tag(self->file, "c:areaChart");
+
+        /* Write second areaChart for secondary Y-axis series */
+        lxw_xml_start_tag(self->file, "c:areaChart", NULL);
+
+        /* Write the c:grouping element. */
+        _chart_write_grouping(self, self->grouping);
+
+        STAILQ_FOREACH(series, self->series_list, list_pointers) {
+            /* Only write series that use secondary Y-axis */
+            if (series->y_axis == self->y2_axis) {
+                _chart_write_ser(self, series);
+            }
+        }
+
+        /* Write the c:axId elements for secondary chart (axes 3 and 4) */
+        _chart_write_axis_id(self, self->axis_id_3);
+        _chart_write_axis_id(self, self->axis_id_4);
+
+        lxw_xml_end_tag(self->file, "c:areaChart");
     }
+    else {
+        /* Standard single Y-axis chart */
+        lxw_xml_start_tag(self->file, "c:areaChart", NULL);
 
-    /* Write the c:dropLines element. */
-    _chart_write_drop_lines(self);
+        /* Write the c:grouping element. */
+        _chart_write_grouping(self, self->grouping);
 
-    /* Write the c:axId elements. */
-    _chart_write_axis_ids(self);
+        STAILQ_FOREACH(series, self->series_list, list_pointers) {
+            /* Write the c:ser element. */
+            _chart_write_ser(self, series);
+        }
 
-    lxw_xml_end_tag(self->file, "c:areaChart");
+        /* Write the c:dropLines element. */
+        _chart_write_drop_lines(self);
+
+        /* Write the c:axId elements. */
+        _chart_write_axis_ids(self);
+
+        lxw_xml_end_tag(self->file, "c:areaChart");
+    }
 }
 
 /*
@@ -4640,30 +4961,91 @@ STATIC void
 _chart_write_bar_chart(lxw_chart *self)
 {
     lxw_chart_series *series;
+    uint8_t has_secondary = _chart_has_secondary_y_axis(self);
 
-    lxw_xml_start_tag(self->file, "c:barChart", NULL);
+    if (has_secondary) {
+        /* Write first barChart for primary Y-axis series */
+        lxw_xml_start_tag(self->file, "c:barChart", NULL);
 
-    /* Write the c:barDir element. */
-    _chart_write_bar_dir(self, "bar");
+        /* Write the c:barDir element. */
+        _chart_write_bar_dir(self, "bar");
 
-    /* Write the c:grouping element. */
-    _chart_write_grouping(self, self->grouping);
+        /* Write the c:grouping element. */
+        _chart_write_grouping(self, self->grouping);
 
-    STAILQ_FOREACH(series, self->series_list, list_pointers) {
-        /* Write the c:ser element. */
-        _chart_write_ser(self, series);
+        STAILQ_FOREACH(series, self->series_list, list_pointers) {
+            /* Only write series that use primary Y-axis (or unspecified) */
+            if (series->y_axis != self->y2_axis) {
+                _chart_write_ser(self, series);
+            }
+        }
+
+        /* Write the c:gapWidth element. */
+        _chart_write_gap_width(self, self->gap_y1);
+
+        /* Write the c:overlap element. */
+        _chart_write_overlap(self, self->overlap_y1);
+
+        /* Write the c:axId elements for primary chart (axes 1 and 2) */
+        _chart_write_axis_id(self, self->axis_id_1);
+        _chart_write_axis_id(self, self->axis_id_2);
+
+        lxw_xml_end_tag(self->file, "c:barChart");
+
+        /* Write second barChart for secondary Y-axis series */
+        lxw_xml_start_tag(self->file, "c:barChart", NULL);
+
+        /* Write the c:barDir element. */
+        _chart_write_bar_dir(self, "bar");
+
+        /* Write the c:grouping element. */
+        _chart_write_grouping(self, self->grouping);
+
+        STAILQ_FOREACH(series, self->series_list, list_pointers) {
+            /* Only write series that use secondary Y-axis */
+            if (series->y_axis == self->y2_axis) {
+                _chart_write_ser(self, series);
+            }
+        }
+
+        /* Write the c:gapWidth element. */
+        _chart_write_gap_width(self, self->gap_y2);
+
+        /* Write the c:overlap element. */
+        _chart_write_overlap(self, self->overlap_y2);
+
+        /* Write the c:axId elements for secondary chart (axes 3 and 4) */
+        _chart_write_axis_id(self, self->axis_id_3);
+        _chart_write_axis_id(self, self->axis_id_4);
+
+        lxw_xml_end_tag(self->file, "c:barChart");
     }
+    else {
+        /* Standard single Y-axis chart */
+        lxw_xml_start_tag(self->file, "c:barChart", NULL);
 
-    /* Write the c:gapWidth element. */
-    _chart_write_gap_width(self, self->gap_y1);
+        /* Write the c:barDir element. */
+        _chart_write_bar_dir(self, "bar");
 
-    /* Write the c:overlap element. */
-    _chart_write_overlap(self, self->overlap_y1);
+        /* Write the c:grouping element. */
+        _chart_write_grouping(self, self->grouping);
 
-    /* Write the c:axId elements. */
-    _chart_write_axis_ids(self);
+        STAILQ_FOREACH(series, self->series_list, list_pointers) {
+            /* Write the c:ser element. */
+            _chart_write_ser(self, series);
+        }
 
-    lxw_xml_end_tag(self->file, "c:barChart");
+        /* Write the c:gapWidth element. */
+        _chart_write_gap_width(self, self->gap_y1);
+
+        /* Write the c:overlap element. */
+        _chart_write_overlap(self, self->overlap_y1);
+
+        /* Write the c:axId elements. */
+        _chart_write_axis_ids(self);
+
+        lxw_xml_end_tag(self->file, "c:barChart");
+    }
 }
 
 /*
@@ -4673,30 +5055,91 @@ STATIC void
 _chart_write_column_chart(lxw_chart *self)
 {
     lxw_chart_series *series;
+    uint8_t has_secondary = _chart_has_secondary_y_axis(self);
 
-    lxw_xml_start_tag(self->file, "c:barChart", NULL);
+    if (has_secondary) {
+        /* Write first barChart for primary Y-axis series */
+        lxw_xml_start_tag(self->file, "c:barChart", NULL);
 
-    /* Write the c:barDir element. */
-    _chart_write_bar_dir(self, "col");
+        /* Write the c:barDir element. */
+        _chart_write_bar_dir(self, "col");
 
-    /* Write the c:grouping element. */
-    _chart_write_grouping(self, self->grouping);
+        /* Write the c:grouping element. */
+        _chart_write_grouping(self, self->grouping);
 
-    STAILQ_FOREACH(series, self->series_list, list_pointers) {
-        /* Write the c:ser element. */
-        _chart_write_ser(self, series);
+        STAILQ_FOREACH(series, self->series_list, list_pointers) {
+            /* Only write series that use primary Y-axis (or unspecified) */
+            if (series->y_axis != self->y2_axis) {
+                _chart_write_ser(self, series);
+            }
+        }
+
+        /* Write the c:gapWidth element. */
+        _chart_write_gap_width(self, self->gap_y1);
+
+        /* Write the c:overlap element. */
+        _chart_write_overlap(self, self->overlap_y1);
+
+        /* Write the c:axId elements for primary chart (axes 1 and 2) */
+        _chart_write_axis_id(self, self->axis_id_1);
+        _chart_write_axis_id(self, self->axis_id_2);
+
+        lxw_xml_end_tag(self->file, "c:barChart");
+
+        /* Write second barChart for secondary Y-axis series */
+        lxw_xml_start_tag(self->file, "c:barChart", NULL);
+
+        /* Write the c:barDir element. */
+        _chart_write_bar_dir(self, "col");
+
+        /* Write the c:grouping element. */
+        _chart_write_grouping(self, self->grouping);
+
+        STAILQ_FOREACH(series, self->series_list, list_pointers) {
+            /* Only write series that use secondary Y-axis */
+            if (series->y_axis == self->y2_axis) {
+                _chart_write_ser(self, series);
+            }
+        }
+
+        /* Write the c:gapWidth element. */
+        _chart_write_gap_width(self, self->gap_y2);
+
+        /* Write the c:overlap element. */
+        _chart_write_overlap(self, self->overlap_y2);
+
+        /* Write the c:axId elements for secondary chart (axes 3 and 4) */
+        _chart_write_axis_id(self, self->axis_id_3);
+        _chart_write_axis_id(self, self->axis_id_4);
+
+        lxw_xml_end_tag(self->file, "c:barChart");
     }
+    else {
+        /* Standard single Y-axis chart */
+        lxw_xml_start_tag(self->file, "c:barChart", NULL);
 
-    /* Write the c:gapWidth element. */
-    _chart_write_gap_width(self, self->gap_y1);
+        /* Write the c:barDir element. */
+        _chart_write_bar_dir(self, "col");
 
-    /* Write the c:overlap element. */
-    _chart_write_overlap(self, self->overlap_y1);
+        /* Write the c:grouping element. */
+        _chart_write_grouping(self, self->grouping);
 
-    /* Write the c:axId elements. */
-    _chart_write_axis_ids(self);
+        STAILQ_FOREACH(series, self->series_list, list_pointers) {
+            /* Write the c:ser element. */
+            _chart_write_ser(self, series);
+        }
 
-    lxw_xml_end_tag(self->file, "c:barChart");
+        /* Write the c:gapWidth element. */
+        _chart_write_gap_width(self, self->gap_y1);
+
+        /* Write the c:overlap element. */
+        _chart_write_overlap(self, self->overlap_y1);
+
+        /* Write the c:axId elements. */
+        _chart_write_axis_ids(self);
+
+        lxw_xml_end_tag(self->file, "c:barChart");
+    }
 }
 
 /*
@@ -4733,33 +5176,82 @@ STATIC void
 _chart_write_line_chart(lxw_chart *self)
 {
     lxw_chart_series *series;
+    uint8_t has_secondary = _chart_has_secondary_y_axis(self);
 
-    lxw_xml_start_tag(self->file, "c:lineChart", NULL);
+    if (has_secondary) {
+        /* Write first lineChart for primary Y-axis series */
+        lxw_xml_start_tag(self->file, "c:lineChart", NULL);
 
-    /* Write the c:grouping element. */
-    _chart_write_grouping(self, self->grouping);
+        /* Write the c:grouping element. */
+        _chart_write_grouping(self, self->grouping);
 
-    STAILQ_FOREACH(series, self->series_list, list_pointers) {
-        /* Write the c:ser element. */
-        _chart_write_ser(self, series);
+        STAILQ_FOREACH(series, self->series_list, list_pointers) {
+            /* Only write series that use primary Y-axis (or unspecified) */
+            if (series->y_axis != self->y2_axis) {
+                _chart_write_ser(self, series);
+            }
+        }
+
+        /* Write the c:marker element. */
+        _chart_write_marker_value(self);
+
+        /* Write the c:axId elements for primary chart (axes 1 and 2) */
+        _chart_write_axis_id(self, self->axis_id_1);
+        _chart_write_axis_id(self, self->axis_id_2);
+
+        lxw_xml_end_tag(self->file, "c:lineChart");
+
+        /* Write second lineChart for secondary Y-axis series */
+        lxw_xml_start_tag(self->file, "c:lineChart", NULL);
+
+        /* Write the c:grouping element. */
+        _chart_write_grouping(self, self->grouping);
+
+        STAILQ_FOREACH(series, self->series_list, list_pointers) {
+            /* Only write series that use secondary Y-axis */
+            if (series->y_axis == self->y2_axis) {
+                _chart_write_ser(self, series);
+            }
+        }
+
+        /* Write the c:marker element. */
+        _chart_write_marker_value(self);
+
+        /* Write the c:axId elements for secondary chart (axes 3 and 4) */
+        _chart_write_axis_id(self, self->axis_id_3);
+        _chart_write_axis_id(self, self->axis_id_4);
+
+        lxw_xml_end_tag(self->file, "c:lineChart");
     }
+    else {
+        /* Standard single Y-axis chart */
+        lxw_xml_start_tag(self->file, "c:lineChart", NULL);
 
-    /* Write the c:dropLines element. */
-    _chart_write_drop_lines(self);
+        /* Write the c:grouping element. */
+        _chart_write_grouping(self, self->grouping);
 
-    /* Write the c:hiLowLines element. */
-    _chart_write_hi_low_lines(self);
+        STAILQ_FOREACH(series, self->series_list, list_pointers) {
+            /* Write the c:ser element. */
+            _chart_write_ser(self, series);
+        }
 
-    /* Write the c:upDownBars element. */
-    _chart_write_up_down_bars(self);
+        /* Write the c:dropLines element. */
+        _chart_write_drop_lines(self);
 
-    /* Write the c:marker element. */
-    _chart_write_marker_value(self);
+        /* Write the c:hiLowLines element. */
+        _chart_write_hi_low_lines(self);
 
-    /* Write the c:axId elements. */
-    _chart_write_axis_ids(self);
+        /* Write the c:upDownBars element. */
+        _chart_write_up_down_bars(self);
 
-    lxw_xml_end_tag(self->file, "c:lineChart");
+        /* Write the c:marker element. */
+        _chart_write_marker_value(self);
+
+        /* Write the c:axId elements. */
+        _chart_write_axis_ids(self);
+
+        lxw_xml_end_tag(self->file, "c:lineChart");
+    }
 }
 
 /*
@@ -4793,35 +5285,106 @@ STATIC void
 _chart_write_scatter_chart(lxw_chart *self)
 {
     lxw_chart_series *series;
+    uint8_t has_secondary = _chart_has_secondary_y_axis(self);
 
-    lxw_xml_start_tag(self->file, "c:scatterChart", NULL);
+    if (has_secondary) {
+        /* Write first scatterChart for primary Y-axis series */
+        lxw_xml_start_tag(self->file, "c:scatterChart", NULL);
 
-    /* Write the c:scatterStyle element. */
-    _chart_write_scatter_style(self);
+        /* Write the c:scatterStyle element. */
+        _chart_write_scatter_style(self);
 
-    STAILQ_FOREACH(series, self->series_list, list_pointers) {
+        STAILQ_FOREACH(series, self->series_list, list_pointers) {
+            /* Only write series that use primary Y-axis (or unspecified) */
+            if (series->y_axis != self->y2_axis) {
+                /* Add default scatter chart formatting to the series data unless
+                 * it has already been specified by the user.*/
+                if (self->type == LXW_CHART_SCATTER && !series->line) {
+                    lxw_chart_line line = {
+                        0x000000,
+                        LXW_TRUE,
+                        2.25,
+                        LXW_CHART_LINE_DASH_SOLID,
+                        0
+                    };
+                    series->line = _chart_convert_line_args(&line);
+                }
 
-        /* Add default scatter chart formatting to the series data unless
-         * it has already been specified by the user.*/
-        if (self->type == LXW_CHART_SCATTER && !series->line) {
-            lxw_chart_line line = {
-                0x000000,
-                LXW_TRUE,
-                2.25,
-                LXW_CHART_LINE_DASH_SOLID,
-                0
-            };
-            series->line = _chart_convert_line_args(&line);
+                /* Write the c:ser element. */
+                _chart_write_xval_ser(self, series);
+            }
         }
 
-        /* Write the c:ser element. */
-        _chart_write_xval_ser(self, series);
+        /* Write the c:axId elements for primary chart (axes 1 and 2) */
+        _chart_write_axis_id(self, self->axis_id_1);
+        _chart_write_axis_id(self, self->axis_id_2);
+
+        lxw_xml_end_tag(self->file, "c:scatterChart");
+
+        /* Write second scatterChart for secondary Y-axis series */
+        lxw_xml_start_tag(self->file, "c:scatterChart", NULL);
+
+        /* Write the c:scatterStyle element. */
+        _chart_write_scatter_style(self);
+
+        STAILQ_FOREACH(series, self->series_list, list_pointers) {
+            /* Only write series that use secondary Y-axis */
+            if (series->y_axis == self->y2_axis) {
+                /* Add default scatter chart formatting to the series data unless
+                 * it has already been specified by the user.*/
+                if (self->type == LXW_CHART_SCATTER && !series->line) {
+                    lxw_chart_line line = {
+                        0x000000,
+                        LXW_TRUE,
+                        2.25,
+                        LXW_CHART_LINE_DASH_SOLID,
+                        0
+                    };
+                    series->line = _chart_convert_line_args(&line);
+                }
+
+                /* Write the c:ser element. */
+                _chart_write_xval_ser(self, series);
+            }
+        }
+
+        /* Write the c:axId elements for secondary chart (axes 3 and 4) */
+        _chart_write_axis_id(self, self->axis_id_3);
+        _chart_write_axis_id(self, self->axis_id_4);
+
+        lxw_xml_end_tag(self->file, "c:scatterChart");
     }
+    else {
+        /* Standard single Y-axis chart */
+        lxw_xml_start_tag(self->file, "c:scatterChart", NULL);
 
-    /* Write the c:axId elements. */
-    _chart_write_axis_ids(self);
+        /* Write the c:scatterStyle element. */
+        _chart_write_scatter_style(self);
 
-    lxw_xml_end_tag(self->file, "c:scatterChart");
+        STAILQ_FOREACH(series, self->series_list, list_pointers) {
+
+            /* Add default scatter chart formatting to the series data unless
+             * it has already been specified by the user.*/
+            if (self->type == LXW_CHART_SCATTER && !series->line) {
+                lxw_chart_line line = {
+                    0x000000,
+                    LXW_TRUE,
+                    2.25,
+                    LXW_CHART_LINE_DASH_SOLID,
+                    0
+                };
+                series->line = _chart_convert_line_args(&line);
+            }
+
+            /* Write the c:ser element. */
+            _chart_write_xval_ser(self, series);
+        }
+
+        /* Write the c:axId elements. */
+        _chart_write_axis_ids(self);
+
+        lxw_xml_end_tag(self->file, "c:scatterChart");
+    }
 }
 
 /*
@@ -4872,6 +5435,10 @@ _chart_write_scatter_plot_area(lxw_chart *self)
     /* Write the c:layout element. */
     _chart_write_layout(self, self->plotarea_layout);
 
+    /* Initialize axis IDs if not already set. */
+    if (!self->axis_id_1)
+        _chart_add_axis_ids(self);
+
     /* Write subclass chart type elements for primary and secondary axes. */
     self->write_chart_type(self);
 
@@ -4885,6 +5452,12 @@ _chart_write_scatter_plot_area(lxw_chart *self)
 
     /* Write the c:valAx element. */
     _chart_write_val_axis(self);
+
+    /* Write the secondary axes if any series uses them. */
+    if (_chart_has_secondary_y_axis(self)) {
+        _chart_write_val_axis_secondary(self);
+        _chart_write_cat_val_axis_secondary(self);
+    }
 
     /* Write the c:spPr element for the plotarea formatting. */
     _chart_write_sp_pr(self, self->plotarea_line, self->plotarea_fill,
@@ -4915,6 +5488,23 @@ _chart_write_pie_plot_area(lxw_chart *self)
 }
 
 /*
+ * Check if any series uses the secondary Y-axis.
+ */
+STATIC uint8_t
+_chart_has_secondary_y_axis(lxw_chart *self)
+{
+    lxw_chart_series *series;
+
+    STAILQ_FOREACH(series, self->series_list, list_pointers) {
+        if (series->y_axis == self->y2_axis) {
+            return LXW_TRUE;
+        }
+    }
+
+    return LXW_FALSE;
+}
+
+/*
  * Write the <c:plotArea> element.
  */
 STATIC void
@@ -4924,6 +5514,10 @@ _chart_write_plot_area(lxw_chart *self)
 
     /* Write the c:layout element. */
     _chart_write_layout(self, self->plotarea_layout);
+
+    /* Initialize axis IDs if not already set. */
+    if (!self->axis_id_1)
+        _chart_add_axis_ids(self);
 
     /* Write subclass chart type elements for primary and secondary axes. */
     self->write_chart_type(self);
@@ -4936,6 +5530,12 @@ _chart_write_plot_area(lxw_chart *self)
 
     /* Write the c:valAx element. */
     _chart_write_val_axis(self);
+
+    /* Write the secondary axes if any series uses them. */
+    if (_chart_has_secondary_y_axis(self)) {
+        _chart_write_val_axis_secondary(self);
+        _chart_write_cat_axis_secondary(self);
+    }
 
     /* Write the c:dTable element. */
     _chart_write_d_table(self);
@@ -5260,11 +5860,17 @@ lxw_chart_assemble_xml_file(lxw_chart *self)
     /* Write the c:chartSpace element. */
     _chart_write_chart_space(self);
 
+    /* Write the c:date1904 element. */
+    _chart_write_date1904(self);
+
     /* Write the c:lang element. */
     _chart_write_lang(self);
 
-    /* Write the c:style element. */
-    _chart_write_style(self);
+    /* Write the c:roundedCorners element. */
+    _chart_write_rounded_corners(self);
+
+    /* Write the mc:AlternateContent element with style references. */
+    _chart_write_style_alternate_content(self);
 
     /* Write the c:protection element. */
     if (self->is_protected)
@@ -5391,6 +5997,44 @@ chart_add_series(lxw_chart *self, const char *categories, const char *values)
 mem_error:
     _chart_series_free(series);
     return NULL;
+}
+
+/*
+ * Add a data series to a chart on a specified Y-axis.
+ */
+lxw_chart_series *
+chart_add_series_on_axis(lxw_chart *self, const char *categories,
+                         const char *values, lxw_chart_axis *y_axis)
+{
+    lxw_chart_series *series;
+
+    /* Validate axis pointer belongs to this chart. */
+    if (y_axis && y_axis != self->y_axis && y_axis != self->y2_axis) {
+        LXW_WARN("chart_add_series_on_axis(): axis must be chart->y_axis "
+                 "or chart->y2_axis");
+        return NULL;
+    }
+
+    /* Validate chart type supports secondary axis. */
+    if (y_axis == self->y2_axis) {
+        if (self->chart_group == LXW_CHART_PIE ||
+            self->chart_group == LXW_CHART_DOUGHNUT ||
+            self->chart_group == LXW_CHART_RADAR) {
+            LXW_WARN("chart_add_series_on_axis(): chart type does not "
+                     "support secondary Y-axis");
+            return NULL;
+        }
+    }
+
+    /* Create series using existing function. */
+    series = chart_add_series(self, categories, values);
+
+    if (series) {
+        /* Assign to specified Y-axis (NULL defaults to primary). */
+        series->y_axis = y_axis;
+    }
+
+    return series;
 }
 
 /*
@@ -5533,12 +6177,6 @@ chart_series_set_pattern(lxw_chart_series *series, lxw_chart_pattern *pattern)
 void
 chart_series_set_marker_type(lxw_chart_series *series, uint8_t type)
 {
-    if (type > LXW_CHART_MARKER_PLUS) {
-        LXW_WARN_FORMAT1
-            ("chart_series_set_marker_type(): invalid marker type: %d", type);
-        return;
-    }
-
     if (!series->marker) {
         lxw_chart_marker *marker = calloc(1, sizeof(struct lxw_chart_marker));
         RETURN_VOID_ON_MEM_ERROR(marker);
@@ -5554,13 +6192,6 @@ chart_series_set_marker_type(lxw_chart_series *series, uint8_t type)
 void
 chart_series_set_marker_size(lxw_chart_series *series, uint8_t size)
 {
-    if (size < 2 || size > 72) {
-        LXW_WARN_FORMAT1
-            ("chart_series_set_marker_size(): marker size '%d' outside Excel range: 2 <= size <= 72",
-             size);
-        return;
-    }
-
     if (!series->marker) {
         lxw_chart_marker *marker = calloc(1, sizeof(struct lxw_chart_marker));
         RETURN_VOID_ON_MEM_ERROR(marker);
@@ -5787,13 +6418,6 @@ mem_error:
 void
 chart_series_set_labels_separator(lxw_chart_series *series, uint8_t separator)
 {
-    if (separator > LXW_CHART_LABEL_SEPARATOR_SPACE) {
-        LXW_WARN_FORMAT1
-            ("chart_series_set_labels_separator(): invalid label separator: %d",
-             separator);
-        return;
-    }
-
     series->has_labels = LXW_TRUE;
     series->label_separator = separator;
 }
@@ -5804,13 +6428,6 @@ chart_series_set_labels_separator(lxw_chart_series *series, uint8_t separator)
 void
 chart_series_set_labels_position(lxw_chart_series *series, uint8_t position)
 {
-    if (position > LXW_CHART_LABEL_POSITION_BEST_FIT) {
-        LXW_WARN_FORMAT1
-            ("chart_series_set_labels_position(): invalid label position: %d",
-             position);
-        return;
-    }
-
     series->has_labels = LXW_TRUE;
     series->show_labels_value = LXW_TRUE;
 
@@ -5932,13 +6549,6 @@ void
 chart_series_set_trendline(lxw_chart_series *series, uint8_t type,
                            uint8_t value)
 {
-    if (type > LXW_CHART_TRENDLINE_TYPE_AVERAGE) {
-        LXW_WARN_FORMAT1
-            ("chart_series_set_trendline(): invalid trendline type: %d",
-             type);
-        return;
-    }
-
     if (type == LXW_CHART_TRENDLINE_TYPE_POLY
         || type == LXW_CHART_TRENDLINE_TYPE_AVERAGE) {
 
@@ -6370,12 +6980,6 @@ chart_axis_off(lxw_chart_axis *axis)
 void
 chart_axis_set_position(lxw_chart_axis *axis, uint8_t position)
 {
-    if (position > LXW_CHART_AXIS_POSITION_BETWEEN) {
-        LXW_WARN_FORMAT1
-            ("chart_axis_set_position(): invalid position: %d", position);
-        return;
-    }
-
     LXW_WARN_CAT_AND_DATE_AXIS_ONLY("chart_axis_set_position");
 
     axis->position_axis = position;
@@ -6387,13 +6991,6 @@ chart_axis_set_position(lxw_chart_axis *axis, uint8_t position)
 void
 chart_axis_set_label_position(lxw_chart_axis *axis, uint8_t position)
 {
-    if (position > LXW_CHART_AXIS_LABEL_POSITION_NONE) {
-        LXW_WARN_FORMAT1
-            ("chart_axis_set_label_position(): invalid label position: %d",
-             position);
-        return;
-    }
-
     axis->label_position = position;
 }
 
@@ -6440,13 +7037,6 @@ chart_axis_set_log_base(lxw_chart_axis *axis, uint16_t log_base)
 void
 chart_axis_set_major_tick_mark(lxw_chart_axis *axis, uint8_t type)
 {
-    if (type > LXW_CHART_AXIS_TICK_MARK_CROSSING) {
-        LXW_WARN_FORMAT1
-            ("chart_axis_set_major_tick_mark(): invalid tick mark type: %d",
-             type);
-        return;
-    }
-
     axis->major_tick_mark = type;
 }
 
@@ -6456,13 +7046,6 @@ chart_axis_set_major_tick_mark(lxw_chart_axis *axis, uint8_t type)
 void
 chart_axis_set_minor_tick_mark(lxw_chart_axis *axis, uint8_t type)
 {
-    if (type > LXW_CHART_AXIS_TICK_MARK_CROSSING) {
-        LXW_WARN_FORMAT1
-            ("chart_axis_set_minor_tick_mark(): invalid tick mark type: %d",
-             type);
-        return;
-    }
-
     axis->minor_tick_mark = type;
 }
 
@@ -6518,13 +7101,6 @@ chart_axis_set_minor_unit(lxw_chart_axis *axis, double unit)
 void
 chart_axis_set_display_units(lxw_chart_axis *axis, uint8_t units)
 {
-    if (units > LXW_CHART_AXIS_UNITS_TRILLIONS) {
-        LXW_WARN_FORMAT1
-            ("chart_axis_set_display_units(): invalid display units: %d",
-             units);
-        return;
-    }
-
     LXW_WARN_VALUE_AXIS_ONLY("chart_axis_set_display_units");
 
     axis->display_units = units;
@@ -6606,13 +7182,6 @@ chart_axis_minor_gridlines_set_line(lxw_chart_axis *axis,
 void
 chart_axis_set_label_align(lxw_chart_axis *axis, uint8_t align)
 {
-    if (align > LXW_CHART_AXIS_LABEL_ALIGN_RIGHT) {
-        LXW_WARN_FORMAT1
-            ("chart_axis_set_label_align(): invalid label alignment: %d",
-             align);
-        return;
-    }
-
     axis->label_align = align;
 }
 
@@ -6699,13 +7268,6 @@ chart_title_set_overlay(lxw_chart *self, uint8_t overlay)
 void
 chart_legend_set_position(lxw_chart *self, uint8_t position)
 {
-    if (position > LXW_CHART_LEGEND_OVERLAY_TOP_RIGHT) {
-        LXW_WARN_FORMAT1
-            ("chart_legend_set_position(): invalid legend position: %d",
-             position);
-        return;
-    }
-
     self->legend.position = position;
 }
 
@@ -6992,13 +7554,6 @@ chart_set_series_overlap(lxw_chart *self, int8_t overlap)
 void
 chart_show_blanks_as(lxw_chart *self, uint8_t option)
 {
-    if (option > LXW_CHART_BLANKS_AS_CONNECTED) {
-        LXW_WARN_FORMAT1
-            ("chart_show_blanks_as(): invalid blank display option: %d",
-             option);
-        return;
-    }
-
     self->show_blanks_as = option;
 }
 

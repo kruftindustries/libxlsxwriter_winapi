@@ -550,6 +550,175 @@ _write_chart_files(lxw_packager *self)
 }
 
 /*
+ * Write the chart style files for charts.
+ */
+STATIC lxw_error
+_write_chart_style_files(lxw_packager *self)
+{
+    lxw_workbook *workbook = self->workbook;
+    lxw_chart *chart;
+    char filename[LXW_FILENAME_LENGTH] = { 0 };
+    uint32_t index = 1;
+    lxw_error err;
+
+    /* Complete chart style XML content (based on Excel's default style 240) - from working file */
+    const char *style_xml =
+        "<cs:chartStyle xmlns:cs=\"http://schemas.microsoft.com/office/drawing/2012/chartStyle\" "
+        "xmlns:a=\"http://schemas.openxmlformats.org/drawingml/2006/main\" id=\"240\">"
+        "<cs:axisTitle><cs:lnRef idx=\"0\"/><cs:fillRef idx=\"0\"/><cs:effectRef idx=\"0\"/>"
+        "<cs:fontRef idx=\"minor\"><a:schemeClr val=\"tx1\"><a:lumMod val=\"65000\"/><a:lumOff val=\"35000\"/></a:schemeClr></cs:fontRef>"
+        "<cs:defRPr sz=\"1000\" kern=\"1200\"/></cs:axisTitle>"
+        "<cs:categoryAxis><cs:lnRef idx=\"0\"/><cs:fillRef idx=\"0\"/><cs:effectRef idx=\"0\"/>"
+        "<cs:fontRef idx=\"minor\"><a:schemeClr val=\"tx1\"><a:lumMod val=\"65000\"/><a:lumOff val=\"35000\"/></a:schemeClr></cs:fontRef>"
+        "<cs:spPr><a:ln w=\"9525\" cap=\"flat\" cmpd=\"sng\" algn=\"ctr\"><a:solidFill><a:schemeClr val=\"tx1\">"
+        "<a:lumMod val=\"25000\"/><a:lumOff val=\"75000\"/></a:schemeClr></a:solidFill><a:round/></a:ln></cs:spPr>"
+        "<cs:defRPr sz=\"900\" kern=\"1200\"/></cs:categoryAxis>"
+        "<cs:chartArea mods=\"allowNoFillOverride allowNoLineOverride\"><cs:lnRef idx=\"0\"/><cs:fillRef idx=\"0\"/>"
+        "<cs:effectRef idx=\"0\"/><cs:fontRef idx=\"minor\"><a:schemeClr val=\"tx1\"/></cs:fontRef>"
+        "<cs:spPr><a:solidFill><a:schemeClr val=\"bg1\"/></a:solidFill>"
+        "<a:ln w=\"9525\" cap=\"flat\" cmpd=\"sng\" algn=\"ctr\"><a:solidFill><a:schemeClr val=\"tx1\">"
+        "<a:lumMod val=\"15000\"/><a:lumOff val=\"85000\"/></a:schemeClr></a:solidFill><a:round/></a:ln></cs:spPr>"
+        "<cs:defRPr sz=\"1000\" kern=\"1200\"/></cs:chartArea>"
+        "<cs:dataLabel><cs:lnRef idx=\"0\"/><cs:fillRef idx=\"0\"/><cs:effectRef idx=\"0\"/>"
+        "<cs:fontRef idx=\"minor\"><a:schemeClr val=\"tx1\"><a:lumMod val=\"75000\"/><a:lumOff val=\"25000\"/></a:schemeClr></cs:fontRef>"
+        "<cs:defRPr sz=\"900\" kern=\"1200\"/></cs:dataLabel>"
+        "<cs:dataLabelCallout><cs:lnRef idx=\"0\"/><cs:fillRef idx=\"0\"/><cs:effectRef idx=\"0\"/>"
+        "<cs:fontRef idx=\"minor\"><a:schemeClr val=\"dk1\"><a:lumMod val=\"65000\"/><a:lumOff val=\"35000\"/></a:schemeClr></cs:fontRef>"
+        "<cs:spPr><a:solidFill><a:schemeClr val=\"lt1\"/></a:solidFill><a:ln><a:solidFill><a:schemeClr val=\"dk1\">"
+        "<a:lumMod val=\"25000\"/><a:lumOff val=\"75000\"/></a:schemeClr></a:solidFill></a:ln></cs:spPr>"
+        "<cs:defRPr sz=\"900\" kern=\"1200\"/><cs:bodyPr rot=\"0\" spcFirstLastPara=\"1\" vertOverflow=\"clip\" horzOverflow=\"clip\" vert=\"horz\" wrap=\"square\" lIns=\"36576\" tIns=\"18288\" rIns=\"36576\" bIns=\"18288\" anchor=\"ctr\" anchorCtr=\"1\"><a:spAutoFit/></cs:bodyPr></cs:dataLabelCallout>"
+        "<cs:dataPoint><cs:lnRef idx=\"0\"/><cs:fillRef idx=\"1\"><cs:styleClr val=\"auto\"/></cs:fillRef>"
+        "<cs:effectRef idx=\"0\"/><cs:fontRef idx=\"minor\"><a:schemeClr val=\"tx1\"/></cs:fontRef></cs:dataPoint>"
+        "<cs:dataPoint3D><cs:lnRef idx=\"0\"/><cs:fillRef idx=\"1\"><cs:styleClr val=\"auto\"/></cs:fillRef>"
+        "<cs:effectRef idx=\"0\"/><cs:fontRef idx=\"minor\"><a:schemeClr val=\"tx1\"/></cs:fontRef></cs:dataPoint3D>"
+        "<cs:dataPointLine><cs:lnRef idx=\"0\"><cs:styleClr val=\"auto\"/></cs:lnRef><cs:fillRef idx=\"1\"/><cs:effectRef idx=\"0\"/>"
+        "<cs:fontRef idx=\"minor\"><a:schemeClr val=\"tx1\"/></cs:fontRef><cs:spPr><a:ln w=\"19050\" cap=\"rnd\"><a:solidFill>"
+        "<a:schemeClr val=\"phClr\"/></a:solidFill><a:round/></a:ln></cs:spPr></cs:dataPointLine>"
+        "<cs:dataPointMarker><cs:lnRef idx=\"0\"><cs:styleClr val=\"auto\"/></cs:lnRef><cs:fillRef idx=\"1\"><cs:styleClr val=\"auto\"/></cs:fillRef>"
+        "<cs:effectRef idx=\"0\"/><cs:fontRef idx=\"minor\"><a:schemeClr val=\"tx1\"/></cs:fontRef>"
+        "<cs:spPr><a:ln w=\"9525\"><a:solidFill><a:schemeClr val=\"phClr\"/></a:solidFill></a:ln></cs:spPr></cs:dataPointMarker>"
+        "<cs:dataPointMarkerLayout symbol=\"circle\" size=\"5\"/>"
+        "<cs:dataPointWireframe><cs:lnRef idx=\"0\"><cs:styleClr val=\"auto\"/></cs:lnRef><cs:fillRef idx=\"0\"/><cs:effectRef idx=\"0\"/>"
+        "<cs:fontRef idx=\"minor\"><a:schemeClr val=\"dk1\"/></cs:fontRef><cs:spPr><a:ln w=\"9525\" cap=\"rnd\"><a:solidFill>"
+        "<a:schemeClr val=\"phClr\"/></a:solidFill><a:round/></a:ln></cs:spPr></cs:dataPointWireframe>"
+        "<cs:dataTable><cs:lnRef idx=\"0\"/><cs:fillRef idx=\"0\"/><cs:effectRef idx=\"0\"/>"
+        "<cs:fontRef idx=\"minor\"><a:schemeClr val=\"tx1\"><a:lumMod val=\"65000\"/><a:lumOff val=\"35000\"/></a:schemeClr></cs:fontRef>"
+        "<cs:spPr><a:noFill/><a:ln w=\"9525\" cap=\"flat\" cmpd=\"sng\" algn=\"ctr\"><a:solidFill><a:schemeClr val=\"tx1\">"
+        "<a:lumMod val=\"15000\"/><a:lumOff val=\"85000\"/></a:schemeClr></a:solidFill><a:round/></a:ln></cs:spPr>"
+        "<cs:defRPr sz=\"900\" kern=\"1200\"/></cs:dataTable>"
+        "<cs:downBar><cs:lnRef idx=\"0\"/><cs:fillRef idx=\"0\"/><cs:effectRef idx=\"0\"/>"
+        "<cs:fontRef idx=\"minor\"><a:schemeClr val=\"tx1\"/></cs:fontRef><cs:spPr><a:solidFill><a:schemeClr val=\"dk1\">"
+        "<a:lumMod val=\"75000\"/><a:lumOff val=\"25000\"/></a:schemeClr></a:solidFill>"
+        "<a:ln w=\"9525\" cap=\"flat\" cmpd=\"sng\" algn=\"ctr\"><a:solidFill><a:schemeClr val=\"tx1\">"
+        "<a:lumMod val=\"65000\"/><a:lumOff val=\"35000\"/></a:schemeClr></a:solidFill><a:round/></a:ln></cs:spPr></cs:downBar>"
+        "<cs:dropLine><cs:lnRef idx=\"0\"/><cs:fillRef idx=\"0\"/><cs:effectRef idx=\"0\"/>"
+        "<cs:fontRef idx=\"minor\"><a:schemeClr val=\"tx1\"/></cs:fontRef><cs:spPr><a:ln w=\"9525\" cap=\"flat\" cmpd=\"sng\" algn=\"ctr\">"
+        "<a:solidFill><a:schemeClr val=\"tx1\"><a:lumMod val=\"35000\"/><a:lumOff val=\"65000\"/></a:schemeClr></a:solidFill><a:round/></a:ln></cs:spPr></cs:dropLine>"
+        "<cs:errorBar><cs:lnRef idx=\"0\"/><cs:fillRef idx=\"0\"/><cs:effectRef idx=\"0\"/>"
+        "<cs:fontRef idx=\"minor\"><a:schemeClr val=\"tx1\"/></cs:fontRef><cs:spPr><a:ln w=\"9525\" cap=\"flat\" cmpd=\"sng\" algn=\"ctr\">"
+        "<a:solidFill><a:schemeClr val=\"tx1\"><a:lumMod val=\"65000\"/><a:lumOff val=\"35000\"/></a:schemeClr></a:solidFill><a:round/></a:ln></cs:spPr></cs:errorBar>"
+        "<cs:floor><cs:lnRef idx=\"0\"/><cs:fillRef idx=\"0\"/><cs:effectRef idx=\"0\"/>"
+        "<cs:fontRef idx=\"minor\"><a:schemeClr val=\"tx1\"/></cs:fontRef><cs:spPr><a:noFill/><a:ln><a:noFill/></a:ln></cs:spPr></cs:floor>"
+        "<cs:gridlineMajor><cs:lnRef idx=\"0\"/><cs:fillRef idx=\"0\"/><cs:effectRef idx=\"0\"/>"
+        "<cs:fontRef idx=\"minor\"><a:schemeClr val=\"tx1\"/></cs:fontRef>"
+        "<cs:spPr><a:ln w=\"9525\" cap=\"flat\" cmpd=\"sng\" algn=\"ctr\"><a:solidFill><a:schemeClr val=\"tx1\">"
+        "<a:lumMod val=\"15000\"/><a:lumOff val=\"85000\"/></a:schemeClr></a:solidFill><a:round/></a:ln></cs:spPr></cs:gridlineMajor>"
+        "<cs:gridlineMinor><cs:lnRef idx=\"0\"/><cs:fillRef idx=\"0\"/><cs:effectRef idx=\"0\"/>"
+        "<cs:fontRef idx=\"minor\"><a:schemeClr val=\"tx1\"/></cs:fontRef><cs:spPr><a:ln w=\"9525\" cap=\"flat\" cmpd=\"sng\" algn=\"ctr\">"
+        "<a:solidFill><a:schemeClr val=\"tx1\"><a:lumMod val=\"5000\"/><a:lumOff val=\"95000\"/></a:schemeClr></a:solidFill><a:round/></a:ln></cs:spPr></cs:gridlineMinor>"
+        "<cs:hiLoLine><cs:lnRef idx=\"0\"/><cs:fillRef idx=\"0\"/><cs:effectRef idx=\"0\"/>"
+        "<cs:fontRef idx=\"minor\"><a:schemeClr val=\"tx1\"/></cs:fontRef><cs:spPr><a:ln w=\"9525\" cap=\"flat\" cmpd=\"sng\" algn=\"ctr\">"
+        "<a:solidFill><a:schemeClr val=\"tx1\"><a:lumMod val=\"50000\"/><a:lumOff val=\"50000\"/></a:schemeClr></a:solidFill><a:round/></a:ln></cs:spPr></cs:hiLoLine>"
+        "<cs:leaderLine><cs:lnRef idx=\"0\"/><cs:fillRef idx=\"0\"/><cs:effectRef idx=\"0\"/>"
+        "<cs:fontRef idx=\"minor\"><a:schemeClr val=\"tx1\"/></cs:fontRef><cs:spPr><a:ln w=\"9525\" cap=\"flat\" cmpd=\"sng\" algn=\"ctr\">"
+        "<a:solidFill><a:schemeClr val=\"tx1\"><a:lumMod val=\"35000\"/><a:lumOff val=\"65000\"/></a:schemeClr></a:solidFill><a:round/></a:ln></cs:spPr></cs:leaderLine>"
+        "<cs:legend><cs:lnRef idx=\"0\"/><cs:fillRef idx=\"0\"/><cs:effectRef idx=\"0\"/>"
+        "<cs:fontRef idx=\"minor\"><a:schemeClr val=\"tx1\"><a:lumMod val=\"65000\"/><a:lumOff val=\"35000\"/></a:schemeClr></cs:fontRef>"
+        "<cs:defRPr sz=\"900\" kern=\"1200\"/></cs:legend>"
+        "<cs:plotArea mods=\"allowNoFillOverride allowNoLineOverride\"><cs:lnRef idx=\"0\"/><cs:fillRef idx=\"0\"/>"
+        "<cs:effectRef idx=\"0\"/><cs:fontRef idx=\"minor\"><a:schemeClr val=\"tx1\"/></cs:fontRef></cs:plotArea>"
+        "<cs:plotArea3D mods=\"allowNoFillOverride allowNoLineOverride\"><cs:lnRef idx=\"0\"/><cs:fillRef idx=\"0\"/>"
+        "<cs:effectRef idx=\"0\"/><cs:fontRef idx=\"minor\"><a:schemeClr val=\"tx1\"/></cs:fontRef></cs:plotArea3D>"
+        "<cs:seriesAxis><cs:lnRef idx=\"0\"/><cs:fillRef idx=\"0\"/><cs:effectRef idx=\"0\"/>"
+        "<cs:fontRef idx=\"minor\"><a:schemeClr val=\"tx1\"><a:lumMod val=\"65000\"/><a:lumOff val=\"35000\"/></a:schemeClr></cs:fontRef>"
+        "<cs:defRPr sz=\"900\" kern=\"1200\"/></cs:seriesAxis>"
+        "<cs:seriesLine><cs:lnRef idx=\"0\"/><cs:fillRef idx=\"0\"/><cs:effectRef idx=\"0\"/>"
+        "<cs:fontRef idx=\"minor\"><a:schemeClr val=\"tx1\"/></cs:fontRef><cs:spPr><a:ln w=\"9525\" cap=\"flat\" cmpd=\"sng\" algn=\"ctr\">"
+        "<a:solidFill><a:schemeClr val=\"tx1\"><a:lumMod val=\"35000\"/><a:lumOff val=\"65000\"/></a:schemeClr></a:solidFill><a:round/></a:ln></cs:spPr></cs:seriesLine>"
+        "<cs:title><cs:lnRef idx=\"0\"/><cs:fillRef idx=\"0\"/><cs:effectRef idx=\"0\"/>"
+        "<cs:fontRef idx=\"minor\"><a:schemeClr val=\"tx1\"><a:lumMod val=\"65000\"/><a:lumOff val=\"35000\"/></a:schemeClr></cs:fontRef>"
+        "<cs:defRPr sz=\"1400\" b=\"0\" kern=\"1200\" spc=\"0\" baseline=\"0\"/></cs:title>"
+        "<cs:trendline><cs:lnRef idx=\"0\"><cs:styleClr val=\"auto\"/></cs:lnRef><cs:fillRef idx=\"0\"/><cs:effectRef idx=\"0\"/>"
+        "<cs:fontRef idx=\"minor\"><a:schemeClr val=\"tx1\"/></cs:fontRef><cs:spPr><a:ln w=\"19050\" cap=\"rnd\"><a:solidFill>"
+        "<a:schemeClr val=\"phClr\"/></a:solidFill><a:prstDash val=\"sysDot\"/></a:ln></cs:spPr></cs:trendline>"
+        "<cs:trendlineLabel><cs:lnRef idx=\"0\"/><cs:fillRef idx=\"0\"/><cs:effectRef idx=\"0\"/>"
+        "<cs:fontRef idx=\"minor\"><a:schemeClr val=\"tx1\"><a:lumMod val=\"65000\"/><a:lumOff val=\"35000\"/></a:schemeClr></cs:fontRef>"
+        "<cs:defRPr sz=\"900\" kern=\"1200\"/></cs:trendlineLabel>"
+        "<cs:upBar><cs:lnRef idx=\"0\"/><cs:fillRef idx=\"0\"/><cs:effectRef idx=\"0\"/>"
+        "<cs:fontRef idx=\"minor\"><a:schemeClr val=\"tx1\"/></cs:fontRef><cs:spPr><a:solidFill><a:schemeClr val=\"lt1\"/></a:solidFill>"
+        "<a:ln w=\"9525\" cap=\"flat\" cmpd=\"sng\" algn=\"ctr\"><a:solidFill><a:schemeClr val=\"tx1\">"
+        "<a:lumMod val=\"65000\"/><a:lumOff val=\"35000\"/></a:schemeClr></a:solidFill><a:round/></a:ln></cs:spPr></cs:upBar>"
+        "<cs:valueAxis><cs:lnRef idx=\"0\"/><cs:fillRef idx=\"0\"/><cs:effectRef idx=\"0\"/>"
+        "<cs:fontRef idx=\"minor\"><a:schemeClr val=\"tx1\"><a:lumMod val=\"65000\"/><a:lumOff val=\"35000\"/></a:schemeClr></cs:fontRef>"
+        "<cs:spPr><a:ln w=\"9525\" cap=\"flat\" cmpd=\"sng\" algn=\"ctr\"><a:solidFill><a:schemeClr val=\"tx1\">"
+        "<a:lumMod val=\"25000\"/><a:lumOff val=\"75000\"/></a:schemeClr></a:solidFill><a:round/></a:ln></cs:spPr>"
+        "<cs:defRPr sz=\"900\" kern=\"1200\"/></cs:valueAxis>"
+        "<cs:wall><cs:lnRef idx=\"0\"/><cs:fillRef idx=\"0\"/><cs:effectRef idx=\"0\"/>"
+        "<cs:fontRef idx=\"minor\"><a:schemeClr val=\"tx1\"/></cs:fontRef><cs:spPr><a:noFill/><a:ln><a:noFill/></a:ln></cs:spPr></cs:wall>"
+        "</cs:chartStyle>";
+
+    STAILQ_FOREACH(chart, workbook->ordered_charts, ordered_list_pointers) {
+        lxw_snprintf(filename, LXW_FILENAME_LENGTH,
+                     "xl/charts/style%d.xml", index++);
+
+        err = _add_buffer_to_zip(self, style_xml, strlen(style_xml), filename);
+        RETURN_ON_ERROR(err);
+    }
+
+    return LXW_NO_ERROR;
+}
+
+/*
+ * Write the chart color files for charts.
+ */
+STATIC lxw_error
+_write_chart_color_files(lxw_packager *self)
+{
+    lxw_workbook *workbook = self->workbook;
+    lxw_chart *chart;
+    char filename[LXW_FILENAME_LENGTH] = { 0 };
+    uint32_t index = 1;
+    lxw_error err;
+
+    /* Static chart color style XML content (based on Excel's default color scheme 10) */
+    const char *colors_xml =
+        "<cs:colorStyle xmlns:cs=\"http://schemas.microsoft.com/office/drawing/2012/chartStyle\" "
+        "xmlns:a=\"http://schemas.openxmlformats.org/drawingml/2006/main\" meth=\"cycle\" id=\"10\">"
+        "<a:schemeClr val=\"accent1\"/><a:schemeClr val=\"accent2\"/><a:schemeClr val=\"accent3\"/>"
+        "<a:schemeClr val=\"accent4\"/><a:schemeClr val=\"accent5\"/><a:schemeClr val=\"accent6\"/>"
+        "<cs:variation/>"
+        "<cs:variation><a:lumMod val=\"60000\"/></cs:variation>"
+        "<cs:variation><a:lumMod val=\"80000\"/><a:lumOff val=\"20000\"/></cs:variation>"
+        "<cs:variation><a:lumMod val=\"80000\"/></cs:variation>"
+        "<cs:variation><a:lumMod val=\"60000\"/><a:lumOff val=\"40000\"/></cs:variation>"
+        "<cs:variation><a:lumMod val=\"50000\"/></cs:variation>"
+        "<cs:variation><a:lumMod val=\"70000\"/><a:lumOff val=\"30000\"/></cs:variation>"
+        "<cs:variation><a:lumMod val=\"70000\"/></cs:variation>"
+        "<cs:variation><a:lumMod val=\"50000\"/><a:lumOff val=\"50000\"/></cs:variation>"
+        "</cs:colorStyle>";
+
+    STAILQ_FOREACH(chart, workbook->ordered_charts, ordered_list_pointers) {
+        lxw_snprintf(filename, LXW_FILENAME_LENGTH,
+                     "xl/charts/colors%d.xml", index++);
+
+        err = _add_buffer_to_zip(self, colors_xml, strlen(colors_xml), filename);
+        RETURN_ON_ERROR(err);
+    }
+
+    return LXW_NO_ERROR;
+}
+
+/*
  * Count the chart files.
  */
 uint32_t
@@ -1504,6 +1673,16 @@ _write_content_types_file(lxw_packager *self)
         lxw_snprintf(filename, LXW_FILENAME_LENGTH, "/xl/charts/chart%d.xml",
                      index);
         lxw_ct_add_chart_name(content_types, filename);
+
+        /* Register external style files (testing individually) */
+        lxw_snprintf(filename, LXW_FILENAME_LENGTH, "/xl/charts/style%d.xml",
+                     index);
+        lxw_ct_add_chart_style_name(content_types, filename);
+
+        /* Register external color files (testing individually) */
+        lxw_snprintf(filename, LXW_FILENAME_LENGTH, "/xl/charts/colors%d.xml",
+                     index);
+        lxw_ct_add_chart_colors_name(content_types, filename);
     }
 
     for (index = 1; index <= drawing_count; index++) {
@@ -1832,6 +2011,51 @@ _write_drawing_rels_file(lxw_packager *self)
         lxw_relationships_assemble_xml_file(rels);
 
         err = _add_to_zip(self, rels->file, &buffer, &buffer_size, sheetname);
+
+        fclose(rels->file);
+        free(buffer);
+        lxw_free_relationships(rels);
+
+        RETURN_ON_ERROR(err);
+    }
+
+    return LXW_NO_ERROR;
+}
+
+/*
+ * Write the chart .rels files for charts that contain style and color references.
+ */
+STATIC lxw_error
+_write_chart_rels_files(lxw_packager *self)
+{
+    lxw_relationships *rels;
+    char *buffer = NULL;
+    size_t buffer_size = 0;
+    lxw_workbook *workbook = self->workbook;
+    lxw_chart *chart;
+    char filename[LXW_FILENAME_LENGTH] = { 0 };
+    uint32_t index = 1;
+    lxw_error err;
+
+    STAILQ_FOREACH(chart, workbook->ordered_charts, ordered_list_pointers) {
+        rels = lxw_relationships_new();
+
+        rels->file = lxw_get_filehandle(&buffer, &buffer_size, self->tmpdir);
+        if (!rels->file) {
+            lxw_free_relationships(rels);
+            return LXW_ERROR_CREATING_TMPFILE;
+        }
+
+        /* Add relationships to chart style and color files */
+        lxw_add_chart_style_relationship(rels);
+        lxw_add_chart_color_relationship(rels);
+
+        lxw_snprintf(filename, LXW_FILENAME_LENGTH,
+                     "xl/charts/_rels/chart%d.xml.rels", index++);
+
+        lxw_relationships_assemble_xml_file(rels);
+
+        err = _add_to_zip(self, rels->file, &buffer, &buffer_size, filename);
 
         fclose(rels->file);
         free(buffer);
@@ -2187,6 +2411,14 @@ lxw_create_package(lxw_packager *self)
     error = _write_chart_files(self);
     RETURN_AND_ZIPCLOSE_ON_ERROR(error);
 
+    /* Generate external style files (testing individually) */
+    error = _write_chart_style_files(self);
+    RETURN_AND_ZIPCLOSE_ON_ERROR(error);
+
+    /* Generate external color files (testing individually) */
+    error = _write_chart_color_files(self);
+    RETURN_AND_ZIPCLOSE_ON_ERROR(error);
+
     error = _write_drawing_files(self);
     RETURN_AND_ZIPCLOSE_ON_ERROR(error);
 
@@ -2218,6 +2450,10 @@ lxw_create_package(lxw_packager *self)
     RETURN_AND_ZIPCLOSE_ON_ERROR(error);
 
     error = _write_drawing_rels_file(self);
+    RETURN_AND_ZIPCLOSE_ON_ERROR(error);
+
+    /* Generate chart relationship files (links to style/color files) */
+    error = _write_chart_rels_files(self);
     RETURN_AND_ZIPCLOSE_ON_ERROR(error);
 
     error = _write_image_files(self);
