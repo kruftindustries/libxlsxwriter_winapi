@@ -309,9 +309,6 @@ lxw_chart_new(uint8_t type)
     chart->y_axis->axis_position = LXW_CHART_AXIS_LEFT;
     chart->y2_axis->axis_position = LXW_CHART_AXIS_RIGHT;
 
-    /* Set the default axis label positions. */
-    chart->y2_axis->label_position = LXW_CHART_AXIS_LABEL_POSITION_HIGH;
-
     /* Set the default axis number formats. */
     _chart_axis_set_default_num_format(chart->x_axis, "General");
     _chart_axis_set_default_num_format(chart->y_axis, "General");
@@ -3273,26 +3270,6 @@ _chart_write_y_val(lxw_chart *self, lxw_chart_series *series)
 }
 
 /*
- * Write the <c:axId> elements for a series.
- */
-STATIC void
-_chart_write_series_axis_ids(lxw_chart *self, lxw_chart_series *series)
-{
-    uint32_t y_axis_id;
-
-    /* Determine which Y-axis this series uses. */
-    if (series->y_axis == self->y2_axis) {
-        y_axis_id = self->axis_id_4;
-    }
-    else {
-        y_axis_id = self->axis_id_2;  /* Primary or NULL defaults to primary. */
-    }
-
-    _chart_write_axis_id(self, self->axis_id_1);  /* X-axis */
-    _chart_write_axis_id(self, y_axis_id);        /* Y-axis */
-}
-
-/*
  * Write the <c:ser> element.
  */
 STATIC void
@@ -3343,15 +3320,6 @@ _chart_write_ser(lxw_chart *self, lxw_chart_series *series)
         || self->chart_group == LXW_CHART_LINE)
         _chart_write_smooth(self, series->smooth);
 
-    /* REMOVED: Axis IDs should not be written inside series elements.
-     * They belong at the chart type level only (e.g., inside lineChart).
-     */
-    /*
-    if (_chart_has_secondary_y_axis(self)) {
-        _chart_write_series_axis_ids(self, series);
-    }
-    */
-
     lxw_xml_end_tag(self->file, "c:ser");
 }
 
@@ -3401,15 +3369,6 @@ _chart_write_xval_ser(lxw_chart *self, lxw_chart_series *series)
 
     /* Write the c:smooth element. */
     _chart_write_smooth(self, series->smooth);
-
-    /* REMOVED: Axis IDs should not be written inside series elements.
-     * They belong at the chart type level only (e.g., inside scatterChart).
-     */
-    /*
-    if (_chart_has_secondary_y_axis(self)) {
-        _chart_write_series_axis_ids(self, series);
-    }
-    */
 
     lxw_xml_end_tag(self->file, "c:ser");
 }
@@ -4649,7 +4608,7 @@ _chart_write_val_axis_secondary(lxw_chart *self)
         _chart_write_delete(self);
 
     /* Write the c:axPos element. Secondary Y-axis should be on the right. */
-    _chart_write_axis_pos(self, LXW_CHART_AXIS_LEFT, self->x_axis->reverse);
+    _chart_write_axis_pos(self, LXW_CHART_AXIS_RIGHT, self->x_axis->reverse);
 
     /* Write the c:majorGridlines element. */
     _chart_write_major_gridlines(self, self->y2_axis);
@@ -4670,8 +4629,7 @@ _chart_write_val_axis_secondary(lxw_chart *self)
     /* Write the c:minorTickMark element. */
     _chart_write_minor_tick_mark(self, self->y2_axis);
 
-    /* Write the c:tickLblPos element. Force HIGH for secondary Y-axis. */
-    self->y2_axis->label_position = LXW_CHART_AXIS_LABEL_POSITION_HIGH;
+    /* Write the c:tickLblPos element. */
     _chart_write_tick_label_pos(self, self->y2_axis);
 
     /* Write the c:spPr element for the axis line. */
@@ -4684,12 +4642,13 @@ _chart_write_val_axis_secondary(lxw_chart *self)
     /* Write the c:crossAx element. */
     _chart_write_cross_axis(self, self->axis_id_1);
 
-    /* Write the c:crosses element. */
-    if (!self->x_axis->has_crossing || self->x_axis->crossing_min
-        || self->x_axis->crossing_max)
+    /* Write the c:crosses element. Secondary Y-axis must cross at max (right side). */
+    {
+        uint8_t original_crossing_max = self->x_axis->crossing_max;
+        self->x_axis->crossing_max = LXW_TRUE;
         _chart_write_crosses(self, self->x_axis);
-    else
-        _chart_write_crosses_at(self, self->x_axis);
+        self->x_axis->crossing_max = original_crossing_max;
+    }
 
     /* Write the c:crossBetween element. */
     _chart_write_cross_between(self, self->x_axis->position_axis);
@@ -5750,6 +5709,10 @@ _chart_initialize_scatter_chart(lxw_chart *self)
     self->x_axis->is_value = LXW_TRUE;
     self->y_axis->is_value = LXW_TRUE;
     self->default_label_position = LXW_CHART_LABEL_POSITION_RIGHT;
+
+    /* Set scatter-specific axis label positions for dual Y-axis support. */
+    self->y_axis->label_position = LXW_CHART_AXIS_LABEL_POSITION_LOW;
+    self->y2_axis->label_position = LXW_CHART_AXIS_LABEL_POSITION_HIGH;
 
     if (self->type == LXW_CHART_SCATTER_STRAIGHT
         || self->type == LXW_CHART_SCATTER_SMOOTH) {

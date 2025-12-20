@@ -103,6 +103,7 @@ int main() {
 
     /* Configure X-axis */
     chart_axis_set_name(chart->x_axis, "Time (hours)");
+    chart_axis_major_gridlines_set_visible(chart->x_axis, LXW_TRUE);
 
     /* Configure primary Y-axis (left side) */
     chart_axis_set_name(chart->y_axis, "Velocity (m/s)");
@@ -136,6 +137,7 @@ int main() {
         printf("  - No connecting lines (markers only)\n");
         printf("  - Legend positioned at bottom\n");
         printf("  - Two Y-axes (left for Velocity, right for Distance)\n");
+        printf("  - Major gridlines on both X and Y axes\n");
         printf("  - Chart in dedicated chartsheet (not embedded in worksheet)\n\n");
         printf("Open test_scatter_chartsheet.xlsx in Excel to verify!\n");
         return 0;

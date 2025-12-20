@@ -29,7 +29,10 @@ ifdef USE_OPENSSL_MD5
 	ENABLED_OPTIONS += libcrypto
 endif
 
-.PHONY: docs tags examples third_party
+.PHONY: docs tags examples third_party dist dist_linux dist_linux_x86 dist_linux_x64
+
+# Output directory for distribution packages.
+DIST_DIR = dist
 
 # Build libxlsxwriter.
 all : third_party
@@ -69,6 +72,58 @@ universal_binary :
 	$(Q)lipo -create -output lib/libxlsxwriter.$(SOVERSION).dylib lib/libxlsxwriter_x86_64.dylib lib/libxlsxwriter_arm64.dylib
 	$(Q)rm -f lib/libxlsxwriter_x86_64.* lib/libxlsxwriter_arm64.*
 
+# Build Linux x86 (32-bit) distribution package.
+dist_linux_x86 :
+	@echo "Building libxlsxwriter $(VERSION) for Linux x86 (32-bit)..."
+	@echo ""
+	@echo "NOTE: Building 32-bit libraries requires i386 multilib support."
+	@echo "If the build fails, install the required packages with:"
+	@echo ""
+	@echo "  sudo dpkg --add-architecture i386 && sudo apt update && \\"
+	@echo "  sudo apt install gcc-multilib libc6-dev-i386 zlib1g-dev:i386"
+	@echo ""
+	$(Q)$(MAKE) clean
+	$(Q)CFLAGS="-m32" $(MAKE) third_party
+	$(Q)CFLAGS="-m32" $(MAKE) -C src
+	$(Q)mkdir -p $(DIST_DIR)
+	$(Q)rm -rf $(DIST_DIR)/libxlsxwriter-$(VERSION)-linux-x86
+	$(Q)mkdir -p $(DIST_DIR)/libxlsxwriter-$(VERSION)-linux-x86/lib
+	$(Q)mkdir -p $(DIST_DIR)/libxlsxwriter-$(VERSION)-linux-x86/include
+	$(Q)cp -R lib/*.a lib/*.so* $(DIST_DIR)/libxlsxwriter-$(VERSION)-linux-x86/lib/
+	$(Q)cp -R include/* $(DIST_DIR)/libxlsxwriter-$(VERSION)-linux-x86/include/
+	$(Q)cp License.txt $(DIST_DIR)/libxlsxwriter-$(VERSION)-linux-x86/
+	$(Q)cp Readme.md $(DIST_DIR)/libxlsxwriter-$(VERSION)-linux-x86/
+	$(Q)cd $(DIST_DIR) && tar -czvf libxlsxwriter-$(VERSION)-linux-x86.tar.gz libxlsxwriter-$(VERSION)-linux-x86
+	$(Q)rm -rf $(DIST_DIR)/libxlsxwriter-$(VERSION)-linux-x86
+	@echo "Created $(DIST_DIR)/libxlsxwriter-$(VERSION)-linux-x86.tar.gz"
+
+# Build Linux x64 (64-bit) distribution package.
+dist_linux_x64 :
+	@echo "Building libxlsxwriter $(VERSION) for Linux x64 (64-bit)..."
+	$(Q)$(MAKE) clean
+	$(Q)CFLAGS="-m64" $(MAKE) third_party
+	$(Q)CFLAGS="-m64" $(MAKE) -C src
+	$(Q)mkdir -p $(DIST_DIR)
+	$(Q)rm -rf $(DIST_DIR)/libxlsxwriter-$(VERSION)-linux-x64
+	$(Q)mkdir -p $(DIST_DIR)/libxlsxwriter-$(VERSION)-linux-x64/lib
+	$(Q)mkdir -p $(DIST_DIR)/libxlsxwriter-$(VERSION)-linux-x64/include
+	$(Q)cp -R lib/*.a lib/*.so* $(DIST_DIR)/libxlsxwriter-$(VERSION)-linux-x64/lib/
+	$(Q)cp -R include/* $(DIST_DIR)/libxlsxwriter-$(VERSION)-linux-x64/include/
+	$(Q)cp License.txt $(DIST_DIR)/libxlsxwriter-$(VERSION)-linux-x64/
+	$(Q)cp Readme.md $(DIST_DIR)/libxlsxwriter-$(VERSION)-linux-x64/
+	$(Q)cd $(DIST_DIR) && tar -czvf libxlsxwriter-$(VERSION)-linux-x64.tar.gz libxlsxwriter-$(VERSION)-linux-x64
+	$(Q)rm -rf $(DIST_DIR)/libxlsxwriter-$(VERSION)-linux-x64
+	@echo "Created $(DIST_DIR)/libxlsxwriter-$(VERSION)-linux-x64.tar.gz"
+
+# Build both Linux x86 and x64 distribution packages.
+dist_linux : dist_linux_x64 dist_linux_x86
+	@echo ""
+	@echo "Linux distribution packages created in $(DIST_DIR)/:"
+	@ls -la $(DIST_DIR)/libxlsxwriter-$(VERSION)-linux-*.tar.gz
+
+# Alias for dist_linux.
+dist : dist_linux
+
 # Build the example programs.
 examples : all
 	$(Q)$(MAKE) -C examples
@@ -92,6 +147,10 @@ clean :
 	$(Q)$(MAKE) clean -C third_party/tmpfileplus
 	$(Q)$(MAKE) clean -C third_party/md5
 	$(Q)$(MAKE) clean -C third_party/dtoa
+
+# Clean distribution directory.
+clean_dist :
+	$(Q)rm -rf $(DIST_DIR)
 
 # Clean src and lib dir only, as a precursor for static analysis.
 clean_src :
