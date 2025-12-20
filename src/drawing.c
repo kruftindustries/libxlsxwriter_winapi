@@ -254,14 +254,20 @@ _drawing_write_a16_creation_id(lxw_drawing *self, uint32_t index)
     char xmlns[] = "http://schemas.microsoft.com/office/drawing/2014/main";
     char guid[LXW_GUID_LENGTH];
 
-    /* Generate a pseudo-GUID based on the index. */
+    /*
+     * Generate a pseudo-GUID based on the index.
+     * The last 12 hex digits represent a 48-bit value (0xF10CC9149C00 + index).
+     * Split into high 16 bits (0xF10C) and low 32 bits (0xC9149C00 + index)
+     * for C90 compatibility (no long long).
+     */
     lxw_snprintf(guid, LXW_GUID_LENGTH,
-                 "{%08X-%04X-%04X-%04X-%012lX}",
+                 "{%08X-%04X-%04X-%04X-%04X%08X}",
                  (unsigned int)(0xCC148400 + index),
                  (unsigned int)0xB16C,
                  (unsigned int)0x9B21,
                  (unsigned int)0xA699,
-                 (unsigned long)(0xF10CC9149C00UL + index));
+                 (unsigned int)0xF10C,
+                 (unsigned int)(0xC9149C00 + index));
 
     LXW_INIT_ATTRIBUTES();
     LXW_PUSH_ATTRIBUTES_STR("xmlns:a16", xmlns);

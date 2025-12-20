@@ -1292,6 +1292,49 @@ The chart functions that support #lxw_chart_layout are:
 - `chart_axis_set_name_layout()`
 
 
+@section ww_charts_secondary_axis Working with Secondary Axes
+
+A secondary Y-axis can be added to a chart to display a second data series
+with a different scale on the right side of the chart. This is particularly
+useful when plotting data with significantly different ranges on the same
+chart.
+
+To add a series to the secondary Y-axis, use the `chart_add_series_on_axis()`
+function with the chart's `y2_axis`:
+
+@code
+    // Add series on primary Y-axis (left side)
+    lxw_chart_series *series1 = chart_add_series(chart,
+        "=Sheet1!$A$1:$A$5", "=Sheet1!$B$1:$B$5");
+
+    // Add series on secondary Y-axis (right side)
+    lxw_chart_series *series2 = chart_add_series_on_axis(chart,
+        "=Sheet1!$A$1:$A$5", "=Sheet1!$C$1:$C$5",
+        chart->y2_axis);
+@endcode
+
+The secondary Y-axis is positioned on the right side of the chart and can be
+configured using the same axis functions as the primary axis:
+
+@code
+    // Set the name for the secondary Y-axis
+    chart_axis_set_name(chart->y2_axis, "Secondary Values");
+
+    // Configure other axis properties
+    chart_axis_set_min(chart->y2_axis, 0);
+    chart_axis_set_max(chart->y2_axis, 100);
+@endcode
+
+For scatter charts, the library automatically configures the axes with
+appropriate defaults for dual Y-axis display:
+
+- Primary Y-axis (`y_axis`): positioned on the left with label position LOW
+- Secondary Y-axis (`y2_axis`): positioned on the right with label position HIGH
+
+@note Secondary axes are currently supported for scatter charts. Support for
+      other chart types may be added in future releases.
+
+
 @section ww_charts_limitations Chart Limitations
 
 The following chart features aren't currently supported in libxlsxwriter but
@@ -1299,9 +1342,7 @@ will be in time. See the [GitHub Chart Feature Requests][1].
 
 [1]: https://github.com/jmcnamara/libxlsxwriter/issues
 
-- Secondary axis.
 - Combined charts.
-- Chartsheets.
 
 If required these features are all available in the Perl and Python versions
 of this library.

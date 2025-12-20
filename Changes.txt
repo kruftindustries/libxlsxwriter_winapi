@@ -14,6 +14,12 @@
 
 ## 1.2.3 Jun 30 2025
 
+- Added support for secondary Y-axis in scatter charts. Series can now be
+  plotted on the right-side Y-axis using `chart_add_series_on_axis()` with
+  the chart's `y2_axis`. The secondary axis is automatically positioned on
+  the right with appropriate label positions for dual-axis display.
+  See @ref ww_charts_secondary_axis for more details.
+
 - Added support for handling dates in the Excel 1904 epoch. See
   `workbook_use_1904_epoch()`.
 
