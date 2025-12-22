@@ -246,6 +246,7 @@ enum lxw_custom_property_types {
 #define LXW_MEM_ERROR()                         \
     LXW_ERROR("Memory allocation failed.")
 
+/* *INDENT-OFF* */
 #define GOTO_LABEL_ON_MEM_ERROR(pointer, label) \
     do {                                        \
         if (!pointer) {                         \
@@ -363,6 +364,7 @@ enum lxw_custom_property_types {
                                (((n) & 0xFF0000)   >>  8) | \
                                (((n) & 0xFF000000) >> 24))
 #endif
+/* *INDENT-ON* */
 
 /* *INDENT-OFF* */
 #ifdef __cplusplus

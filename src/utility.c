@@ -401,7 +401,6 @@ lxw_datetime_validate(lxw_datetime *datetime)
     return LXW_NO_ERROR;
 }
 
-
 /*
  * Convert a lxw_datetime struct to an Excel serial date, with a 1900
  * or 1904 epoch.
@@ -429,7 +428,7 @@ lxw_datetime_to_excel_date_with_epoch(lxw_datetime *datetime,
 
     if (lxw_datetime_validate(datetime) != LXW_NO_ERROR)
         return 0.0;
-    
+
     /* For times without dates set the default date for the epoch. */
     if (!year) {
         if (!use_1904_epoch) {
