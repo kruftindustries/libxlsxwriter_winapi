@@ -177,30 +177,26 @@ uint32_t lxw_name_to_row_2(const char *row_str);
 uint16_t lxw_name_to_col_2(const char *col_str);
 
 /**
- * @brief Validates a #lxw_datetime struct.
+ * @brief Validate a #lxw_datetime struct.
+ *
+ * Validates a #lxw_datetime struct to ensure its fields are within acceptable
+ * ranges for Excel dates and times.
+ *
+ * The members of the #lxw_datetime struct and the range of their values are:
+ *
+ * Member   | Value
+ * -------- | -----------
+ * year     | 1900 - 9999
+ * month    | 1 - 12
+ * day      | 1 - 31
+ * hour     | 0 - 23
+ * min      | 0 - 59
+ * sec      | 0 - 59.999
  *
  * @param datetime A pointer to a #lxw_datetime struct.
  *
- * @return #LXW_NO_ERROR if valid, or an #lxw_error code if invalid.
- *
- * The `%lxw_datetime_validate()` function validates the fields of a
- * #lxw_datetime struct to ensure they contain valid date/time values:
- *
- * @code
- *     lxw_datetime datetime = {2013, 2, 28, 12, 0, 0.0};
- *
- *     lxw_error err = lxw_datetime_validate(&datetime);
- *     if (err != LXW_NO_ERROR) {
- *         // Handle invalid datetime
- *     }
- * @endcode
- *
- * The function checks:
- * - Month is between 0-12 (0 for time-only values)
- * - Day is valid for the given month (accounts for leap years)
- * - Hour is between 0-23
- * - Minute is between 0-59
- * - Seconds is between 0.0 and 59.999...
+ * @return A #lxw_error code. Either #LXW_NO_ERROR or
+ *         #LXW_ERROR_DATETIME_VALIDATION if a field is out of range.
  */
 lxw_error lxw_datetime_validate(lxw_datetime *datetime);
 
