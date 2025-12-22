@@ -41,6 +41,7 @@ char *error_strings[LXW_MAX_ERRNO + 1] = {
     "NULL function parameter ignored.",
     "Function parameter validation error.",
     "Function string parameter is empty.",
+    "Datetime struct parameter has an invalid field value.",
     "Worksheet name exceeds Excel's limit of 31 characters.",
     "Worksheet name cannot contain invalid characters: '[ ] : * ? / \\'",
     "Worksheet name cannot start or end with an apostrophe.",
