@@ -333,6 +333,65 @@ lxw_name_to_col_2(const char *col_str)
 }
 
 /*
+ * Validate a lxw_datetime struct.
+ * Returns LXW_NO_ERROR if valid, LXW_ERROR_PARAMETER_VALIDATION if invalid.
+ */
+lxw_error
+lxw_datetime_validate(lxw_datetime *datetime)
+{
+    int year, month, day, hour, min;
+    double sec;
+    int mdays[] = { 0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 };
+
+    if (!datetime)
+        return LXW_ERROR_NULL_PARAMETER_IGNORED;
+
+    year = datetime->year;
+    month = datetime->month;
+    day = datetime->day;
+    hour = datetime->hour;
+    min = datetime->min;
+    sec = datetime->sec;
+
+    /* Year 0 is allowed for time-only values. */
+    if (year < 0)
+        return LXW_ERROR_PARAMETER_VALIDATION;
+
+    /* Validate month (0 is allowed for year-only or time-only). */
+    if (month < 0 || month > 12)
+        return LXW_ERROR_PARAMETER_VALIDATION;
+
+    /* Check for leap year and update February days. */
+    if (year % 4 == 0 && (year % 100 != 0 || year % 400 == 0))
+        mdays[2] = 29;
+
+    /* Validate day. */
+    if (month > 0) {
+        if (day < 0 || day > mdays[month])
+            return LXW_ERROR_PARAMETER_VALIDATION;
+    }
+    else {
+        /* Month is 0, day should also be 0 or we're in time-only mode. */
+        if (day < 0 || day > 31)
+            return LXW_ERROR_PARAMETER_VALIDATION;
+    }
+
+    /* Validate hour (0-23). */
+    if (hour < 0 || hour > 23)
+        return LXW_ERROR_PARAMETER_VALIDATION;
+
+    /* Validate minute (0-59). */
+    if (min < 0 || min > 59)
+        return LXW_ERROR_PARAMETER_VALIDATION;
+
+    /* Validate seconds (0.0 to < 60.0). */
+    if (sec < 0.0 || sec >= 60.0)
+        return LXW_ERROR_PARAMETER_VALIDATION;
+
+    return LXW_NO_ERROR;
+}
+
+/*
  * Convert a lxw_datetime struct to an Excel serial date, with a 1900
  * or 1904 epoch.
  */

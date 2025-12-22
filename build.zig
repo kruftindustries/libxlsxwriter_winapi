@@ -1,14 +1,15 @@
 const std = @import("std");
 
 const xlsxw_version: std.SemanticVersion = .{
-    .major = 1,
-    .minor = 1,
-    .patch = 9,
+    .major = 2,
+    .minor = 0,
+    .patch = 0,
 };
 
 pub fn build(b: *std.Build) void {
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
+    const options = .{ target, optimize };
 
     const shared = b.option(bool, "SHARED_LIBRARY", "Build the Shared Library [default: false]") orelse false;
     const examples = b.option(bool, "BUILD_EXAMPLES", "Build libxlsxwriter examples [default: false]") orelse false;
@@ -80,7 +81,7 @@ pub fn build(b: *std.Build) void {
         });
     }
 
-    const zlib = buildZlib(b, .{ target, optimize });
+    const zlib = buildZlib(b, options);
     lib.linkLibrary(zlib);
     lib.installLibraryHeaders(zlib);
 
@@ -124,42 +125,52 @@ pub fn build(b: *std.Build) void {
         buildExe(b, .{
             .lib = lib,
             .path = "examples/anatomy.c",
+            .options = options,
         });
         buildExe(b, .{
             .lib = lib,
             .path = "examples/array_formula.c",
+            .options = options,
         });
         buildExe(b, .{
             .lib = lib,
             .path = "examples/autofilter.c",
+            .options = options,
         });
         buildExe(b, .{
             .lib = lib,
             .path = "examples/background.c",
+            .options = options,
         });
         buildExe(b, .{
             .lib = lib,
             .path = "examples/chart_area.c",
+            .options = options,
         });
         buildExe(b, .{
             .lib = lib,
             .path = "examples/chart_column.c",
+            .options = options,
         });
         buildExe(b, .{
             .lib = lib,
             .path = "examples/data_validate.c",
+            .options = options,
         });
         buildExe(b, .{
             .lib = lib,
             .path = "examples/hello.c",
+            .options = options,
         });
         buildExe(b, .{
             .lib = lib,
             .path = "examples/watermark.c",
+            .options = options,
         });
         buildExe(b, .{
             .lib = lib,
             .path = "examples/worksheet_protection.c",
+            .options = options,
         });
     }
     // build tests
@@ -167,82 +178,102 @@ pub fn build(b: *std.Build) void {
         buildTest(b, .{
             .lib = lib,
             .path = "test/unit/app/test_app.c",
+            .options = options,
         });
         buildTest(b, .{
             .lib = lib,
             .path = "test/unit/chart/test_chart.c",
+            .options = options,
         });
         buildTest(b, .{
             .lib = lib,
             .path = "test/unit/chartsheet/test_chartsheet.c",
+            .options = options,
         });
         buildTest(b, .{
             .lib = lib,
             .path = "test/unit/content_types/test_content_types.c",
+            .options = options,
         });
         buildTest(b, .{
             .lib = lib,
             .path = "test/unit/content_types/test_content_types_write_default.c",
+            .options = options,
         });
         buildTest(b, .{
             .lib = lib,
             .path = "test/unit/content_types/test_content_types_write_override.c",
+            .options = options,
         });
         buildTest(b, .{
             .lib = lib,
             .path = "test/unit/relationships/test_relationships.c",
+            .options = options,
         });
         buildTest(b, .{
             .lib = lib,
             .path = "test/unit/app/test_app_xml_declaration.c",
+            .options = options,
         });
         buildTest(b, .{
             .lib = lib,
             .path = "test/unit/relationships/test_relationships_xml_declaration.c",
+            .options = options,
         });
         buildTest(b, .{
             .lib = lib,
             .path = "test/unit/custom/test_custom_xml_declaration.c",
+            .options = options,
         });
         buildTest(b, .{
             .lib = lib,
             .path = "test/unit/metadata/test_metadata_xml_declaration.c",
+            .options = options,
         });
         buildTest(b, .{
             .lib = lib,
             .path = "test/unit/core/test_core_xml_declaration.c",
+            .options = options,
         });
         buildTest(b, .{
             .lib = lib,
             .path = "test/unit/sst/test_shared_strings.c",
+            .options = options,
         });
         buildTest(b, .{
             .lib = lib,
             .path = "test/unit/workbook/test_workbook.c",
+            .options = options,
         });
         buildTest(b, .{
             .lib = lib,
             .path = "test/unit/xmlwriter/test_xmlwriter.c",
+            .options = options,
         });
         buildTest(b, .{
             .lib = lib,
             .path = "test/unit/table/test_table01.c",
+            .options = options,
         });
         buildTest(b, .{
             .lib = lib,
             .path = "test/unit/table/test_table02.c",
+            .options = options,
         });
         buildTest(b, .{
             .lib = lib,
             .path = "test/unit/table/test_table03.c",
+            .options = options,
         });
         buildTest(b, .{
             .lib = lib,
             .path = "test/unit/table/test_table04.c",
+            .options = options,
         });
         buildTest(b, .{
             .lib = lib,
             .path = "test/unit/styles/test_styles_write_border.c",
+            .options = options,
         });
     }
 }
@@ -250,8 +281,8 @@ pub fn build(b: *std.Build) void {
 fn buildExe(b: *std.Build, info: BuildInfo) void {
     const exe = b.addExecutable(.{
         .name = info.filename(),
-        .optimize = info.lib.root_module.optimize.?,
-        .target = info.lib.root_module.resolved_target.?,
+        .optimize = info.options[1],
+        .target = info.options[0],
     });
     exe.addCSourceFile(.{
         .file = b.path(info.path),
@@ -280,8 +311,8 @@ fn buildExe(b: *std.Build, info: BuildInfo) void {
 fn buildTest(b: *std.Build, info: BuildInfo) void {
     const exe = b.addExecutable(.{
         .name = info.filename(),
-        .optimize = info.lib.root_module.optimize.?,
-        .target = info.lib.root_module.resolved_target.?,
+        .optimize = info.options[1],
+        .target = info.options[0],
     });
     exe.root_module.addCMacro("TESTING", "");
     exe.addCSourceFile(.{
@@ -326,9 +357,12 @@ const minizip_src: []const []const u8 = &.{
     "third_party/minizip/zip.c",
 };
 
+const Options = struct { std.Build.ResolvedTarget, std.builtin.OptimizeMode };
+
 const BuildInfo = struct {
     lib: *std.Build.Step.Compile,
     path: []const u8,
+    options: Options,
 
     fn filename(self: BuildInfo) []const u8 {
         var split = std.mem.splitSequence(u8, std.fs.path.basename(self.path), ".");
@@ -336,7 +370,7 @@ const BuildInfo = struct {
     }
 };
 
-fn buildZlib(b: *std.Build, options: anytype) *std.Build.Step.Compile {
+fn buildZlib(b: *std.Build, options: Options) *std.Build.Step.Compile {
     const libz = b.addStaticLibrary(.{
         .name = "z",
         .target = options[0],

@@ -133,6 +133,30 @@ _check_border(uint8_t border)
         return LXW_BORDER_NONE;
 }
 
+/*
+ * Check a user input pattern.
+ */
+STATIC uint8_t
+_check_pattern(uint8_t pattern)
+{
+    if (pattern <= LXW_PATTERN_GRAY_0625)
+        return pattern;
+    else
+        return LXW_PATTERN_NONE;
+}
+
+/*
+ * Check a user input vertical alignment.
+ */
+STATIC uint8_t
+_check_valign(uint8_t align)
+{
+    if (align >= LXW_ALIGN_VERTICAL_TOP && align <= LXW_ALIGN_VERTICAL_DISTRIBUTED)
+        return align;
+    else
+        return LXW_ALIGN_NONE;
+}
+
 /*****************************************************************************
  *
  * Public functions.
@@ -546,7 +570,7 @@ format_set_text_justlast(lxw_format *self)
 void
 format_set_pattern(lxw_format *self, uint8_t value)
 {
-    self->pattern = value;
+    self->pattern = _check_pattern(value);
 }
 
 /*
@@ -689,7 +713,7 @@ format_set_diag_color(lxw_format *self, lxw_color_t color)
 void
 format_set_diag_border(lxw_format *self, uint8_t style)
 {
-    self->diag_border = style;
+    self->diag_border = _check_border(style);
 }
 
 /*
@@ -707,7 +731,7 @@ format_set_num_format_index(lxw_format *self, uint8_t value)
 void
 format_set_valign(lxw_format *self, uint8_t value)
 {
-    self->text_v_align = value;
+    self->text_v_align = _check_valign(value);
 }
 
 /*

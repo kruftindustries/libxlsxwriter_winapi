@@ -3007,13 +3007,15 @@ _worksheet_position_object_pixels(lxw_worksheet *self,
         height = height + y1;
 
     /* Subtract the underlying cell widths to find the end cell. */
-    while (width >= _worksheet_size_col(self, col_end, anchor)) {
+    while (width >= _worksheet_size_col(self, col_end, anchor)
+           && col_end < LXW_COL_MAX) {
         width -= _worksheet_size_col(self, col_end, anchor);
         col_end++;
     }
 
     /* Subtract the underlying cell heights to find the end cell. */
-    while (height >= _worksheet_size_row(self, row_end, anchor)) {
+    while (height >= _worksheet_size_row(self, row_end, anchor)
+           && row_end < LXW_ROW_MAX) {
         height -= _worksheet_size_row(self, row_end, anchor);
         row_end++;
     }
@@ -8332,9 +8334,9 @@ worksheet_write_datetime(lxw_worksheet *self,
     if (err)
         return err;
 
-    printf("worksheet_write_datetime(): %d-%02d-%02d - 1904: %d\n",
-           datetime->year, datetime->month, datetime->day,
-           self->use_1904_epoch);
+    err = lxw_datetime_validate(datetime);
+    if (err)
+        return err;
 
     excel_date =
         lxw_datetime_to_excel_date_with_epoch(datetime, self->use_1904_epoch);
