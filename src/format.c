@@ -151,7 +151,8 @@ _check_pattern(uint8_t pattern)
 STATIC uint8_t
 _check_valign(uint8_t align)
 {
-    if (align >= LXW_ALIGN_VERTICAL_TOP && align <= LXW_ALIGN_VERTICAL_DISTRIBUTED)
+    if (align >= LXW_ALIGN_VERTICAL_TOP
+        && align <= LXW_ALIGN_VERTICAL_DISTRIBUTED)
         return align;
     else
         return LXW_ALIGN_NONE;

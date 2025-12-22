@@ -969,7 +969,7 @@ _write_chart_style_files(lxw_packager *self)
 
     /* Calculate total length of style XML. */
     for (i = 0; chart_style_xml_funcs[i] != NULL; i++) {
-        total_len += strlen(chart_style_xml_funcs[i]());
+        total_len += strlen(chart_style_xml_funcs[i] ());
     }
 
     /* Allocate buffer for complete style XML. */
@@ -981,7 +981,7 @@ _write_chart_style_files(lxw_packager *self)
     /* Concatenate all parts. */
     pos = style_xml;
     for (i = 0; chart_style_xml_funcs[i] != NULL; i++) {
-        const char *part = chart_style_xml_funcs[i]();
+        const char *part = chart_style_xml_funcs[i] ();
         size_t len = strlen(part);
         memcpy(pos, part, len);
         pos += len;
@@ -1060,7 +1060,7 @@ _write_chart_color_files(lxw_packager *self)
 
     /* Calculate total length of color XML. */
     for (i = 0; chart_color_xml_funcs[i] != NULL; i++) {
-        total_len += strlen(chart_color_xml_funcs[i]());
+        total_len += strlen(chart_color_xml_funcs[i] ());
     }
 
     /* Allocate buffer for complete color XML. */
@@ -1072,7 +1072,7 @@ _write_chart_color_files(lxw_packager *self)
     /* Concatenate all parts. */
     pos = colors_xml;
     for (i = 0; chart_color_xml_funcs[i] != NULL; i++) {
-        const char *part = chart_color_xml_funcs[i]();
+        const char *part = chart_color_xml_funcs[i] ();
         size_t len = strlen(part);
         memcpy(pos, part, len);
         pos += len;

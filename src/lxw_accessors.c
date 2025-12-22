@@ -10,7 +10,9 @@
 /*
  * Get the primary X-axis from a chart.
  */
-lxw_chart_axis* chart_get_x_axis(lxw_chart *chart) {
+lxw_chart_axis *
+chart_get_x_axis(lxw_chart *chart)
+{
     if (chart)
         return chart->x_axis;
     return NULL;
@@ -19,7 +21,9 @@ lxw_chart_axis* chart_get_x_axis(lxw_chart *chart) {
 /*
  * Get the primary Y-axis from a chart.
  */
-lxw_chart_axis* chart_get_y_axis(lxw_chart *chart) {
+lxw_chart_axis *
+chart_get_y_axis(lxw_chart *chart)
+{
     if (chart)
         return chart->y_axis;
     return NULL;
@@ -28,7 +32,9 @@ lxw_chart_axis* chart_get_y_axis(lxw_chart *chart) {
 /*
  * Get the secondary Y-axis from a chart.
  */
-lxw_chart_axis* chart_get_y2_axis(lxw_chart *chart) {
+lxw_chart_axis *
+chart_get_y2_axis(lxw_chart *chart)
+{
     if (chart)
         return chart->y2_axis;
     return NULL;

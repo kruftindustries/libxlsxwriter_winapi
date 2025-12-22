@@ -583,8 +583,8 @@ _chart_add_axis_ids(lxw_chart *self)
 
     self->axis_id_1 = chart_id + axis_count;
     self->axis_id_2 = self->axis_id_1 + 1;
-    self->axis_id_3 = self->axis_id_1 + 2;  /* Secondary X-axis (hidden) */
-    self->axis_id_4 = self->axis_id_1 + 3;  /* Secondary Y-axis */
+    self->axis_id_3 = self->axis_id_1 + 2;      /* Secondary X-axis (hidden) */
+    self->axis_id_4 = self->axis_id_1 + 3;      /* Secondary Y-axis */
 }
 
 /*
@@ -649,7 +649,8 @@ _chart_write_chart_space(lxw_chart *self)
     char xmlns_c[] = LXW_SCHEMA_DRAWING "/chart";
     char xmlns_a[] = LXW_SCHEMA_DRAWING "/main";
     char xmlns_r[] = LXW_SCHEMA_OFFICEDOC "/relationships";
-    char xmlns_c16r2[] = "http://schemas.microsoft.com/office/drawing/2015/06/chart";
+    char xmlns_c16r2[] =
+        "http://schemas.microsoft.com/office/drawing/2015/06/chart";
 
     LXW_INIT_ATTRIBUTES();
     LXW_PUSH_ATTRIBUTES_STR("xmlns:c", xmlns_c);
@@ -720,13 +721,15 @@ _chart_write_style_alternate_content(lxw_chart *self)
 
     /* Write AlternateContent for compatibility */
     LXW_INIT_ATTRIBUTES();
-    LXW_PUSH_ATTRIBUTES_STR("xmlns:mc", "http://schemas.openxmlformats.org/markup-compatibility/2006");
+    LXW_PUSH_ATTRIBUTES_STR("xmlns:mc",
+                            "http://schemas.openxmlformats.org/markup-compatibility/2006");
     lxw_xml_start_tag(self->file, "mc:AlternateContent", &attributes);
     LXW_FREE_ATTRIBUTES();
 
     /* Write Choice element for modern Excel (2013+) */
     LXW_INIT_ATTRIBUTES();
-    LXW_PUSH_ATTRIBUTES_STR("xmlns:c14", "http://schemas.microsoft.com/office/drawing/2007/8/2/chart");
+    LXW_PUSH_ATTRIBUTES_STR("xmlns:c14",
+                            "http://schemas.microsoft.com/office/drawing/2007/8/2/chart");
     LXW_PUSH_ATTRIBUTES_STR("Requires", "c14");
     lxw_xml_start_tag(self->file, "mc:Choice", &attributes);
     LXW_FREE_ATTRIBUTES();

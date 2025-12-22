@@ -5,6 +5,9 @@
  * Copyright 2014-2025, John McNamara, jmcnamara@cpan.org.
  */
 
+/* Required for strdup() on POSIX systems */
+#define _POSIX_C_SOURCE 200809L
+
 #include <stdlib.h>
 #include <string.h>
 #include "xlsxwriter.h"
@@ -35,7 +38,7 @@ ansi_to_utf8(const char *ansi_str)
     if (wide_len == 0)
         return NULL;
 
-    wide_str = (wchar_t *)malloc(wide_len * sizeof(wchar_t));
+    wide_str = (wchar_t *) malloc(wide_len * sizeof(wchar_t));
     if (!wide_str)
         return NULL;
 
@@ -46,20 +49,22 @@ ansi_to_utf8(const char *ansi_str)
     }
 
     /* Get the length needed for UTF-8 string */
-    utf8_len = WideCharToMultiByte(CP_UTF8, 0, wide_str, -1, NULL, 0, NULL, NULL);
+    utf8_len =
+        WideCharToMultiByte(CP_UTF8, 0, wide_str, -1, NULL, 0, NULL, NULL);
     if (utf8_len == 0) {
         free(wide_str);
         return NULL;
     }
 
-    utf8_str = (char *)malloc(utf8_len);
+    utf8_str = (char *) malloc(utf8_len);
     if (!utf8_str) {
         free(wide_str);
         return NULL;
     }
 
     /* Convert wide string to UTF-8 */
-    if (WideCharToMultiByte(CP_UTF8, 0, wide_str, -1, utf8_str, utf8_len, NULL, NULL) == 0) {
+    if (WideCharToMultiByte
+        (CP_UTF8, 0, wide_str, -1, utf8_str, utf8_len, NULL, NULL) == 0) {
         free(wide_str);
         free(utf8_str);
         return NULL;
@@ -87,7 +92,8 @@ lxw_parse_cell(const char *cell_str, lxw_row_t *row, lxw_col_t *col)
 }
 
 void
-lxw_parse_cols(const char *cols_str, lxw_col_t *first_col, lxw_col_t *last_col)
+lxw_parse_cols(const char *cols_str, lxw_col_t *first_col,
+               lxw_col_t *last_col)
 {
     if (first_col)
         *first_col = lxw_name_to_col(cols_str);
@@ -96,8 +102,9 @@ lxw_parse_cols(const char *cols_str, lxw_col_t *first_col, lxw_col_t *last_col)
 }
 
 void
-lxw_parse_range(const char *range_str, lxw_row_t *first_row, lxw_col_t *first_col,
-                lxw_row_t *last_row, lxw_col_t *last_col)
+lxw_parse_range(const char *range_str, lxw_row_t *first_row,
+                lxw_col_t *first_col, lxw_row_t *last_row,
+                lxw_col_t *last_col)
 {
     if (first_row)
         *first_row = lxw_name_to_row(range_str);
@@ -114,8 +121,9 @@ lxw_parse_range(const char *range_str, lxw_row_t *first_row, lxw_col_t *first_co
  * ============================================================================ */
 
 lxw_error
-worksheet_write_string_lv(lxw_worksheet *worksheet, lxw_row_t row, lxw_col_t col,
-                          const char *string, lxw_format *format)
+worksheet_write_string_lv(lxw_worksheet *worksheet, lxw_row_t row,
+                          lxw_col_t col, const char *string,
+                          lxw_format *format)
 {
     lxw_error err;
     char *utf8_str = ansi_to_utf8(string);
@@ -126,8 +134,9 @@ worksheet_write_string_lv(lxw_worksheet *worksheet, lxw_row_t row, lxw_col_t col
 }
 
 lxw_error
-worksheet_write_formula_lv(lxw_worksheet *worksheet, lxw_row_t row, lxw_col_t col,
-                           const char *formula, lxw_format *format)
+worksheet_write_formula_lv(lxw_worksheet *worksheet, lxw_row_t row,
+                           lxw_col_t col, const char *formula,
+                           lxw_format *format)
 {
     lxw_error err;
     char *utf8_str = ansi_to_utf8(formula);
@@ -150,8 +159,8 @@ worksheet_write_url_lv(lxw_worksheet *worksheet, lxw_row_t row, lxw_col_t col,
 }
 
 lxw_error
-worksheet_write_comment_lv(lxw_worksheet *worksheet, lxw_row_t row, lxw_col_t col,
-                           const char *string)
+worksheet_write_comment_lv(lxw_worksheet *worksheet, lxw_row_t row,
+                           lxw_col_t col, const char *string)
 {
     lxw_error err;
     char *utf8_str = ansi_to_utf8(string);
@@ -203,7 +212,8 @@ worksheet_merge_range_lv(lxw_worksheet *worksheet, lxw_row_t first_row,
  * ============================================================================ */
 
 lxw_chart_series *
-chart_add_series_lv(lxw_chart *chart, const char *categories, const char *values)
+chart_add_series_lv(lxw_chart *chart, const char *categories,
+                    const char *values)
 {
     lxw_chart_series *series;
     char *utf8_categories = ansi_to_utf8(categories);
@@ -286,7 +296,8 @@ workbook_add_chartsheet_lv(lxw_workbook *workbook, const char *sheetname)
 }
 
 lxw_error
-workbook_define_name_lv(lxw_workbook *workbook, const char *name, const char *formula)
+workbook_define_name_lv(lxw_workbook *workbook, const char *name,
+                        const char *formula)
 {
     lxw_error err;
     char *utf8_name = ansi_to_utf8(name);
@@ -332,13 +343,15 @@ workbook_validate_sheet_name_lv(lxw_workbook *workbook, const char *sheetname)
 }
 
 lxw_error
-workbook_set_custom_property_string_lv(lxw_workbook *workbook, const char *name, const char *value)
+workbook_set_custom_property_string_lv(lxw_workbook *workbook,
+                                       const char *name, const char *value)
 {
     lxw_error err;
     char *utf8_name = ansi_to_utf8(name);
     char *utf8_value = ansi_to_utf8(value);
 
-    err = workbook_set_custom_property_string(workbook, utf8_name, utf8_value);
+    err =
+        workbook_set_custom_property_string(workbook, utf8_name, utf8_value);
     free(utf8_name);
     free(utf8_value);
     return err;
@@ -391,7 +404,8 @@ chart_axis_set_num_format_lv(lxw_chart_axis *axis, const char *num_format)
 }
 
 void
-chart_series_set_labels_num_format_lv(lxw_chart_series *series, const char *num_format)
+chart_series_set_labels_num_format_lv(lxw_chart_series *series,
+                                      const char *num_format)
 {
     char *utf8_str = ansi_to_utf8(num_format);
     chart_series_set_labels_num_format(series, utf8_str);
@@ -403,12 +417,14 @@ chart_series_set_labels_num_format_lv(lxw_chart_series *series, const char *num_
  * ============================================================================ */
 
 void
-chart_series_set_categories_lv(lxw_chart_series *series, const char *sheetname,
-                               lxw_row_t first_row, lxw_col_t first_col,
-                               lxw_row_t last_row, lxw_col_t last_col)
+chart_series_set_categories_lv(lxw_chart_series *series,
+                               const char *sheetname, lxw_row_t first_row,
+                               lxw_col_t first_col, lxw_row_t last_row,
+                               lxw_col_t last_col)
 {
     char *utf8_str = ansi_to_utf8(sheetname);
-    chart_series_set_categories(series, utf8_str, first_row, first_col, last_row, last_col);
+    chart_series_set_categories(series, utf8_str, first_row, first_col,
+                                last_row, last_col);
     free(utf8_str);
 }
 
@@ -418,13 +434,15 @@ chart_series_set_values_lv(lxw_chart_series *series, const char *sheetname,
                            lxw_row_t last_row, lxw_col_t last_col)
 {
     char *utf8_str = ansi_to_utf8(sheetname);
-    chart_series_set_values(series, utf8_str, first_row, first_col, last_row, last_col);
+    chart_series_set_values(series, utf8_str, first_row, first_col, last_row,
+                            last_col);
     free(utf8_str);
 }
 
 void
-chart_series_set_name_range_lv(lxw_chart_series *series, const char *sheetname,
-                               lxw_row_t row, lxw_col_t col)
+chart_series_set_name_range_lv(lxw_chart_series *series,
+                               const char *sheetname, lxw_row_t row,
+                               lxw_col_t col)
 {
     char *utf8_str = ansi_to_utf8(sheetname);
     chart_series_set_name_range(series, utf8_str, row, col);

@@ -320,7 +320,8 @@ lxw_ct_add_chart_name(lxw_content_types *self, const char *name)
 void
 lxw_ct_add_chart_style_name(lxw_content_types *self, const char *name)
 {
-    lxw_ct_add_override(self, name, "application/vnd.ms-office.chartstyle+xml");
+    lxw_ct_add_override(self, name,
+                        "application/vnd.ms-office.chartstyle+xml");
 }
 
 /*
@@ -329,7 +330,8 @@ lxw_ct_add_chart_style_name(lxw_content_types *self, const char *name)
 void
 lxw_ct_add_chart_colors_name(lxw_content_types *self, const char *name)
 {
-    lxw_ct_add_override(self, name, "application/vnd.ms-office.chartcolorstyle+xml");
+    lxw_ct_add_override(self, name,
+                        "application/vnd.ms-office.chartcolorstyle+xml");
 }
 
 /*

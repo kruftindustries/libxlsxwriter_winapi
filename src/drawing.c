@@ -262,12 +262,11 @@ _drawing_write_a16_creation_id(lxw_drawing *self, uint32_t index)
      */
     lxw_snprintf(guid, LXW_GUID_LENGTH,
                  "{%08X-%04X-%04X-%04X-%04X%08X}",
-                 (unsigned int)(0xCC148400 + index),
-                 (unsigned int)0xB16C,
-                 (unsigned int)0x9B21,
-                 (unsigned int)0xA699,
-                 (unsigned int)0xF10C,
-                 (unsigned int)(0xC9149C00 + index));
+                 (unsigned int) (0xCC148400 + index),
+                 (unsigned int) 0xB16C,
+                 (unsigned int) 0x9B21,
+                 (unsigned int) 0xA699,
+                 (unsigned int) 0xF10C, (unsigned int) (0xC9149C00 + index));
 
     LXW_INIT_ATTRIBUTES();
     LXW_PUSH_ATTRIBUTES_STR("xmlns:a16", xmlns);
