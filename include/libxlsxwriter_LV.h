@@ -183,104 +183,120 @@ typedef struct lxw_header_footer_options {
 } lxw_header_footer_options;
 
 /* ============================================================================
- * Enumeration Constants (as defines for LabVIEW compatibility)
+ * Enumeration Types (for LabVIEW custom control generation)
  * ============================================================================ */
 
-#define LXW_CHART_NONE                          0
-#define LXW_CHART_AREA                          1
-#define LXW_CHART_AREA_STACKED                  2
-#define LXW_CHART_AREA_STACKED_PERCENT          3
-#define LXW_CHART_BAR                           4
-#define LXW_CHART_BAR_STACKED                   5
-#define LXW_CHART_BAR_STACKED_PERCENT           6
-#define LXW_CHART_COLUMN                        7
-#define LXW_CHART_COLUMN_STACKED                8
-#define LXW_CHART_COLUMN_STACKED_PERCENT        9
-#define LXW_CHART_DOUGHNUT                      10
-#define LXW_CHART_LINE                          11
-#define LXW_CHART_LINE_STACKED                  12
-#define LXW_CHART_LINE_STACKED_PERCENT          13
-#define LXW_CHART_PIE                           14
-#define LXW_CHART_SCATTER                       15
-#define LXW_CHART_SCATTER_STRAIGHT              16
-#define LXW_CHART_SCATTER_STRAIGHT_WITH_MARKERS 17
-#define LXW_CHART_SCATTER_SMOOTH                18
-#define LXW_CHART_SCATTER_SMOOTH_WITH_MARKERS   19
-#define LXW_CHART_RADAR                         20
-#define LXW_CHART_RADAR_WITH_MARKERS            21
-#define LXW_CHART_RADAR_FILLED                  22
+typedef enum lxw_chart_type {
+    LXW_CHART_NONE = 0,
+    LXW_CHART_AREA = 1,
+    LXW_CHART_AREA_STACKED = 2,
+    LXW_CHART_AREA_STACKED_PERCENT = 3,
+    LXW_CHART_BAR = 4,
+    LXW_CHART_BAR_STACKED = 5,
+    LXW_CHART_BAR_STACKED_PERCENT = 6,
+    LXW_CHART_COLUMN = 7,
+    LXW_CHART_COLUMN_STACKED = 8,
+    LXW_CHART_COLUMN_STACKED_PERCENT = 9,
+    LXW_CHART_DOUGHNUT = 10,
+    LXW_CHART_LINE = 11,
+    LXW_CHART_LINE_STACKED = 12,
+    LXW_CHART_LINE_STACKED_PERCENT = 13,
+    LXW_CHART_PIE = 14,
+    LXW_CHART_SCATTER = 15,
+    LXW_CHART_SCATTER_STRAIGHT = 16,
+    LXW_CHART_SCATTER_STRAIGHT_WITH_MARKERS = 17,
+    LXW_CHART_SCATTER_SMOOTH = 18,
+    LXW_CHART_SCATTER_SMOOTH_WITH_MARKERS = 19,
+    LXW_CHART_RADAR = 20,
+    LXW_CHART_RADAR_WITH_MARKERS = 21,
+    LXW_CHART_RADAR_FILLED = 22
+} lxw_chart_type;
 
-#define LXW_CHART_LEGEND_NONE                   0
-#define LXW_CHART_LEGEND_RIGHT                  1
-#define LXW_CHART_LEGEND_LEFT                   2
-#define LXW_CHART_LEGEND_TOP                    3
-#define LXW_CHART_LEGEND_BOTTOM                 4
-#define LXW_CHART_LEGEND_TOP_RIGHT              5
-#define LXW_CHART_LEGEND_OVERLAY_RIGHT          6
-#define LXW_CHART_LEGEND_OVERLAY_LEFT           7
+typedef enum lxw_chart_legend_position {
+    LXW_CHART_LEGEND_NONE = 0,
+    LXW_CHART_LEGEND_RIGHT = 1,
+    LXW_CHART_LEGEND_LEFT = 2,
+    LXW_CHART_LEGEND_TOP = 3,
+    LXW_CHART_LEGEND_BOTTOM = 4,
+    LXW_CHART_LEGEND_TOP_RIGHT = 5,
+    LXW_CHART_LEGEND_OVERLAY_RIGHT = 6,
+    LXW_CHART_LEGEND_OVERLAY_LEFT = 7
+} lxw_chart_legend_position;
 
-#define LXW_CHART_MARKER_AUTOMATIC              0
-#define LXW_CHART_MARKER_NONE                   1
-#define LXW_CHART_MARKER_SQUARE                 2
-#define LXW_CHART_MARKER_DIAMOND                3
-#define LXW_CHART_MARKER_TRIANGLE               4
-#define LXW_CHART_MARKER_X                      5
-#define LXW_CHART_MARKER_STAR                   6
-#define LXW_CHART_MARKER_SHORT_DASH             7
-#define LXW_CHART_MARKER_LONG_DASH              8
-#define LXW_CHART_MARKER_CIRCLE                 9
-#define LXW_CHART_MARKER_PLUS                   10
+typedef enum lxw_chart_marker_type {
+    LXW_CHART_MARKER_AUTOMATIC = 0,
+    LXW_CHART_MARKER_NONE = 1,
+    LXW_CHART_MARKER_SQUARE = 2,
+    LXW_CHART_MARKER_DIAMOND = 3,
+    LXW_CHART_MARKER_TRIANGLE = 4,
+    LXW_CHART_MARKER_X = 5,
+    LXW_CHART_MARKER_STAR = 6,
+    LXW_CHART_MARKER_SHORT_DASH = 7,
+    LXW_CHART_MARKER_LONG_DASH = 8,
+    LXW_CHART_MARKER_CIRCLE = 9,
+    LXW_CHART_MARKER_PLUS = 10
+} lxw_chart_marker_type;
 
-#define LXW_CHART_AXIS_LABEL_POSITION_NEXT_TO   0
-#define LXW_CHART_AXIS_LABEL_POSITION_HIGH      1
-#define LXW_CHART_AXIS_LABEL_POSITION_LOW       2
-#define LXW_CHART_AXIS_LABEL_POSITION_NONE      3
+typedef enum lxw_chart_axis_label_position {
+    LXW_CHART_AXIS_LABEL_POSITION_NEXT_TO = 0,
+    LXW_CHART_AXIS_LABEL_POSITION_HIGH = 1,
+    LXW_CHART_AXIS_LABEL_POSITION_LOW = 2,
+    LXW_CHART_AXIS_LABEL_POSITION_NONE = 3
+} lxw_chart_axis_label_position;
 
-#define LXW_ALIGN_NONE                          0
-#define LXW_ALIGN_LEFT                          1
-#define LXW_ALIGN_CENTER                        2
-#define LXW_ALIGN_RIGHT                         3
-#define LXW_ALIGN_FILL                          4
-#define LXW_ALIGN_JUSTIFY                       5
-#define LXW_ALIGN_CENTER_ACROSS                 6
-#define LXW_ALIGN_DISTRIBUTED                   7
-#define LXW_ALIGN_VERTICAL_TOP                  8
-#define LXW_ALIGN_VERTICAL_BOTTOM               9
-#define LXW_ALIGN_VERTICAL_CENTER               10
-#define LXW_ALIGN_VERTICAL_JUSTIFY              11
-#define LXW_ALIGN_VERTICAL_DISTRIBUTED          12
+typedef enum lxw_alignment {
+    LXW_ALIGN_NONE = 0,
+    LXW_ALIGN_LEFT = 1,
+    LXW_ALIGN_CENTER = 2,
+    LXW_ALIGN_RIGHT = 3,
+    LXW_ALIGN_FILL = 4,
+    LXW_ALIGN_JUSTIFY = 5,
+    LXW_ALIGN_CENTER_ACROSS = 6,
+    LXW_ALIGN_DISTRIBUTED = 7,
+    LXW_ALIGN_VERTICAL_TOP = 8,
+    LXW_ALIGN_VERTICAL_BOTTOM = 9,
+    LXW_ALIGN_VERTICAL_CENTER = 10,
+    LXW_ALIGN_VERTICAL_JUSTIFY = 11,
+    LXW_ALIGN_VERTICAL_DISTRIBUTED = 12
+} lxw_alignment;
 
-#define LXW_BORDER_NONE                         0
-#define LXW_BORDER_THIN                         1
-#define LXW_BORDER_MEDIUM                       2
-#define LXW_BORDER_DASHED                       3
-#define LXW_BORDER_DOTTED                       4
-#define LXW_BORDER_THICK                        5
-#define LXW_BORDER_DOUBLE                       6
-#define LXW_BORDER_HAIR                         7
+typedef enum lxw_border_style {
+    LXW_BORDER_NONE = 0,
+    LXW_BORDER_THIN = 1,
+    LXW_BORDER_MEDIUM = 2,
+    LXW_BORDER_DASHED = 3,
+    LXW_BORDER_DOTTED = 4,
+    LXW_BORDER_THICK = 5,
+    LXW_BORDER_DOUBLE = 6,
+    LXW_BORDER_HAIR = 7
+} lxw_border_style;
 
-#define LXW_PATTERN_NONE                        0
-#define LXW_PATTERN_SOLID                       1
-#define LXW_PATTERN_MEDIUM_GRAY                 2
-#define LXW_PATTERN_DARK_GRAY                   3
-#define LXW_PATTERN_LIGHT_GRAY                  4
+typedef enum lxw_pattern_type {
+    LXW_PATTERN_NONE = 0,
+    LXW_PATTERN_SOLID = 1,
+    LXW_PATTERN_MEDIUM_GRAY = 2,
+    LXW_PATTERN_DARK_GRAY = 3,
+    LXW_PATTERN_LIGHT_GRAY = 4
+} lxw_pattern_type;
 
-#define LXW_COLOR_BLACK     0x000000
-#define LXW_COLOR_BLUE      0x0000FF
-#define LXW_COLOR_BROWN     0x800000
-#define LXW_COLOR_CYAN      0x00FFFF
-#define LXW_COLOR_GRAY      0x808080
-#define LXW_COLOR_GREEN     0x008000
-#define LXW_COLOR_LIME      0x00FF00
-#define LXW_COLOR_MAGENTA   0xFF00FF
-#define LXW_COLOR_NAVY      0x000080
-#define LXW_COLOR_ORANGE    0xFF6600
-#define LXW_COLOR_PINK      0xFF00FF
-#define LXW_COLOR_PURPLE    0x800080
-#define LXW_COLOR_RED       0xFF0000
-#define LXW_COLOR_SILVER    0xC0C0C0
-#define LXW_COLOR_WHITE     0xFFFFFF
-#define LXW_COLOR_YELLOW    0xFFFF00
+typedef enum lxw_defined_color {
+    LXW_COLOR_BLACK = 0x000000,
+    LXW_COLOR_NAVY = 0x000080,
+    LXW_COLOR_BLUE = 0x0000FF,
+    LXW_COLOR_GREEN = 0x008000,
+    LXW_COLOR_CYAN = 0x00FFFF,
+    LXW_COLOR_LIME = 0x00FF00,
+    LXW_COLOR_ORANGE = 0xFF6600,
+    LXW_COLOR_BROWN = 0x800000,
+    LXW_COLOR_PURPLE = 0x800080,
+    LXW_COLOR_GRAY = 0x808080,
+    LXW_COLOR_SILVER = 0xC0C0C0,
+    LXW_COLOR_RED = 0xFF0000,
+    LXW_COLOR_MAGENTA = 0xFF00FF,
+    LXW_COLOR_PINK = 0xFF00FF,
+    LXW_COLOR_YELLOW = 0xFFFF00,
+    LXW_COLOR_WHITE = 0xFFFFFF
+} lxw_defined_color;
 
 /* ============================================================================
  * Workbook Functions
@@ -288,17 +304,10 @@ typedef struct lxw_header_footer_options {
 
 lxw_workbook workbook_new(const char *filename);
 lxw_workbook workbook_new_opt(const char *filename, unsigned long options);
-lxw_worksheet workbook_add_worksheet(lxw_workbook workbook, const char *sheetname);
-lxw_chartsheet workbook_add_chartsheet(lxw_workbook workbook, const char *sheetname);
 lxw_format workbook_add_format(lxw_workbook workbook);
 lxw_chart workbook_add_chart(lxw_workbook workbook, uint8_t chart_type);
 lxw_error workbook_close(lxw_workbook workbook);
 lxw_error workbook_set_properties(lxw_workbook workbook, unsigned long properties);
-lxw_error workbook_define_name(lxw_workbook workbook, const char *name, const char *formula);
-lxw_worksheet workbook_get_worksheet_by_name(lxw_workbook workbook, const char *name);
-lxw_chartsheet workbook_get_chartsheet_by_name(lxw_workbook workbook, const char *name);
-lxw_error workbook_validate_sheet_name(lxw_workbook workbook, const char *sheetname);
-lxw_error workbook_set_custom_property_string(lxw_workbook workbook, const char *name, const char *value);
 lxw_error workbook_set_custom_property_number(lxw_workbook workbook, const char *name, double value);
 lxw_error workbook_set_custom_property_integer(lxw_workbook workbook, const char *name, int32_t value);
 lxw_error workbook_set_custom_property_boolean(lxw_workbook workbook, const char *name, uint8_t value);
@@ -309,25 +318,11 @@ lxw_error workbook_set_custom_property_datetime(lxw_workbook workbook, const cha
  * ============================================================================ */
 
 lxw_error worksheet_write_number(lxw_worksheet worksheet, lxw_row_t row, lxw_col_t col, double number, lxw_format format);
-lxw_error worksheet_write_string(lxw_worksheet worksheet, lxw_row_t row, lxw_col_t col, const char *string, lxw_format format);
-lxw_error worksheet_write_formula(lxw_worksheet worksheet, lxw_row_t row, lxw_col_t col, const char *formula, lxw_format format);
-lxw_error worksheet_write_formula_num(lxw_worksheet worksheet, lxw_row_t row, lxw_col_t col, const char *formula, lxw_format format, double result);
-lxw_error worksheet_write_formula_str(lxw_worksheet worksheet, lxw_row_t row, lxw_col_t col, const char *formula, lxw_format format, const char *result);
-lxw_error worksheet_write_array_formula(lxw_worksheet worksheet, lxw_row_t first_row, lxw_col_t first_col, lxw_row_t last_row, lxw_col_t last_col, const char *formula, lxw_format format);
-lxw_error worksheet_write_array_formula_num(lxw_worksheet worksheet, lxw_row_t first_row, lxw_col_t first_col, lxw_row_t last_row, lxw_col_t last_col, const char *formula, lxw_format format, double result);
-lxw_error worksheet_write_dynamic_array_formula(lxw_worksheet worksheet, lxw_row_t first_row, lxw_col_t first_col, lxw_row_t last_row, lxw_col_t last_col, const char *formula, lxw_format format);
-lxw_error worksheet_write_dynamic_array_formula_num(lxw_worksheet worksheet, lxw_row_t first_row, lxw_col_t first_col, lxw_row_t last_row, lxw_col_t last_col, const char *formula, lxw_format format, double result);
-lxw_error worksheet_write_dynamic_formula(lxw_worksheet worksheet, lxw_row_t row, lxw_col_t col, const char *formula, lxw_format format);
-lxw_error worksheet_write_dynamic_formula_num(lxw_worksheet worksheet, lxw_row_t row, lxw_col_t col, const char *formula, lxw_format format, double result);
 lxw_error worksheet_write_datetime(lxw_worksheet worksheet, lxw_row_t row, lxw_col_t col, lxw_datetime *datetime, lxw_format format);
 lxw_error worksheet_write_unixtime(lxw_worksheet worksheet, lxw_row_t row, lxw_col_t col, int64_t unixtime, lxw_format format);
-lxw_error worksheet_write_url(lxw_worksheet worksheet, lxw_row_t row, lxw_col_t col, const char *url, lxw_format format);
-lxw_error worksheet_write_url_opt(lxw_worksheet worksheet, lxw_row_t row, lxw_col_t col, const char *url, lxw_format format, const char *string, const char *tooltip);
 lxw_error worksheet_write_boolean(lxw_worksheet worksheet, lxw_row_t row, lxw_col_t col, int value, lxw_format format);
 lxw_error worksheet_write_blank(lxw_worksheet worksheet, lxw_row_t row, lxw_col_t col, lxw_format format);
 lxw_error worksheet_write_rich_string(lxw_worksheet worksheet, lxw_row_t row, lxw_col_t col, unsigned long rich_string, lxw_format format);
-lxw_error worksheet_write_comment(lxw_worksheet worksheet, lxw_row_t row, lxw_col_t col, const char *string);
-lxw_error worksheet_write_comment_opt(lxw_worksheet worksheet, lxw_row_t row, lxw_col_t col, const char *string, unsigned long options);
 
 lxw_error worksheet_set_row(lxw_worksheet worksheet, lxw_row_t row, double height, lxw_format format);
 lxw_error worksheet_set_row_opt(lxw_worksheet worksheet, lxw_row_t row, double height, lxw_format format, lxw_row_col_options *options);
@@ -345,7 +340,6 @@ lxw_error worksheet_insert_image_buffer_opt(lxw_worksheet worksheet, lxw_row_t r
 lxw_error worksheet_insert_chart(lxw_worksheet worksheet, lxw_row_t row, lxw_col_t col, lxw_chart chart);
 lxw_error worksheet_insert_chart_opt(lxw_worksheet worksheet, lxw_row_t row, lxw_col_t col, lxw_chart chart, lxw_chart_options *options);
 
-lxw_error worksheet_merge_range(lxw_worksheet worksheet, lxw_row_t first_row, lxw_col_t first_col, lxw_row_t last_row, lxw_col_t last_col, const char *string, lxw_format format);
 lxw_error worksheet_autofilter(lxw_worksheet worksheet, lxw_row_t first_row, lxw_col_t first_col, lxw_row_t last_row, lxw_col_t last_col);
 lxw_error worksheet_filter_column(lxw_worksheet worksheet, lxw_col_t col, unsigned long rule);
 lxw_error worksheet_filter_column2(lxw_worksheet worksheet, lxw_col_t col, unsigned long rule1, unsigned long rule2, uint8_t and_or);
@@ -370,10 +364,6 @@ void worksheet_set_portrait(lxw_worksheet worksheet);
 void worksheet_set_page_view(lxw_worksheet worksheet);
 void worksheet_set_paper(lxw_worksheet worksheet, uint8_t paper_type);
 void worksheet_set_margins(lxw_worksheet worksheet, double left, double right, double top, double bottom);
-lxw_error worksheet_set_header(lxw_worksheet worksheet, const char *header);
-lxw_error worksheet_set_footer(lxw_worksheet worksheet, const char *footer);
-lxw_error worksheet_set_header_opt(lxw_worksheet worksheet, const char *header, lxw_header_footer_options *options);
-lxw_error worksheet_set_footer_opt(lxw_worksheet worksheet, const char *footer, lxw_header_footer_options *options);
 void worksheet_set_h_pagebreaks(lxw_worksheet worksheet, unsigned long breaks);
 void worksheet_set_v_pagebreaks(lxw_worksheet worksheet, unsigned long breaks);
 void worksheet_print_across(lxw_worksheet worksheet);
@@ -396,7 +386,6 @@ void worksheet_outline_settings(lxw_worksheet worksheet, uint8_t visible, uint8_
 void worksheet_set_default_row(lxw_worksheet worksheet, double height, uint8_t hide_unused_rows);
 lxw_error worksheet_set_vba_name(lxw_worksheet worksheet, const char *name);
 void worksheet_show_comments(lxw_worksheet worksheet);
-void worksheet_set_comments_author(lxw_worksheet worksheet, const char *author);
 void worksheet_ignore_errors(lxw_worksheet worksheet, uint8_t type, const char *range);
 lxw_error worksheet_set_background(lxw_worksheet worksheet, const char *filename);
 lxw_error worksheet_set_background_buffer(lxw_worksheet worksheet, const unsigned char *image_buffer, size_t image_size);
@@ -418,21 +407,12 @@ void chartsheet_set_landscape(lxw_chartsheet chartsheet);
 void chartsheet_set_portrait(lxw_chartsheet chartsheet);
 void chartsheet_set_paper(lxw_chartsheet chartsheet, uint8_t paper_type);
 void chartsheet_set_margins(lxw_chartsheet chartsheet, double left, double right, double top, double bottom);
-lxw_error chartsheet_set_header(lxw_chartsheet chartsheet, const char *header);
-lxw_error chartsheet_set_footer(lxw_chartsheet chartsheet, const char *footer);
-lxw_error chartsheet_set_header_opt(lxw_chartsheet chartsheet, const char *header, lxw_header_footer_options *options);
-lxw_error chartsheet_set_footer_opt(lxw_chartsheet chartsheet, const char *footer, lxw_header_footer_options *options);
 
 /* ============================================================================
  * Chart Functions
  * ============================================================================ */
 
-lxw_chart_series chart_add_series(lxw_chart chart, const char *categories, const char *values);
 lxw_chart_series chart_add_series_on_axis(lxw_chart chart, const char *categories, const char *values, lxw_chart_axis y_axis);
-void chart_series_set_categories(lxw_chart_series series, const char *sheetname, lxw_row_t first_row, lxw_col_t first_col, lxw_row_t last_row, lxw_col_t last_col);
-void chart_series_set_values(lxw_chart_series series, const char *sheetname, lxw_row_t first_row, lxw_col_t first_col, lxw_row_t last_row, lxw_col_t last_col);
-void chart_series_set_name(lxw_chart_series series, const char *name);
-void chart_series_set_name_range(lxw_chart_series series, const char *sheetname, lxw_row_t row, lxw_col_t col);
 void chart_series_set_line(lxw_chart_series series, lxw_chart_line *line);
 void chart_series_set_fill(lxw_chart_series series, lxw_chart_fill *fill);
 void chart_series_set_invert_if_negative(lxw_chart_series series);
@@ -451,7 +431,6 @@ void chart_series_set_labels_position(lxw_chart_series series, uint8_t position)
 void chart_series_set_labels_leader_line(lxw_chart_series series);
 void chart_series_set_labels_legend(lxw_chart_series series);
 void chart_series_set_labels_percentage(lxw_chart_series series);
-void chart_series_set_labels_num_format(lxw_chart_series series, const char *num_format);
 void chart_series_set_labels_font(lxw_chart_series series, lxw_chart_font *font);
 void chart_series_set_labels_line(lxw_chart_series series, lxw_chart_line *line);
 void chart_series_set_labels_fill(lxw_chart_series series, lxw_chart_fill *fill);
@@ -461,7 +440,6 @@ lxw_error chart_series_set_trendline_forecast(lxw_chart_series series, double fo
 lxw_error chart_series_set_trendline_equation(lxw_chart_series series);
 lxw_error chart_series_set_trendline_r_squared(lxw_chart_series series);
 lxw_error chart_series_set_trendline_intercept(lxw_chart_series series, double intercept);
-lxw_error chart_series_set_trendline_name(lxw_chart_series series, const char *name);
 lxw_error chart_series_set_trendline_line(lxw_chart_series series, lxw_chart_line *line);
 lxw_series_error_bars chart_series_get_error_bars(lxw_chart_series series, uint8_t axis_type);
 void chart_series_set_error_bars(lxw_series_error_bars error_bars, uint8_t type, double value);
@@ -470,11 +448,8 @@ void chart_series_set_error_bars_endcap(lxw_series_error_bars error_bars, uint8_
 void chart_series_set_error_bars_line(lxw_series_error_bars error_bars, lxw_chart_line *line);
 
 lxw_chart_axis chart_axis_get(lxw_chart chart, uint8_t axis_type);
-void chart_axis_set_name(lxw_chart_axis axis, const char *name);
-void chart_axis_set_name_range(lxw_chart_axis axis, const char *sheetname, lxw_row_t row, lxw_col_t col);
 void chart_axis_set_name_font(lxw_chart_axis axis, lxw_chart_font *font);
 void chart_axis_set_num_font(lxw_chart_axis axis, lxw_chart_font *font);
-void chart_axis_set_num_format(lxw_chart_axis axis, const char *num_format);
 void chart_axis_set_line(lxw_chart_axis axis, lxw_chart_line *line);
 void chart_axis_set_fill(lxw_chart_axis axis, lxw_chart_fill *fill);
 void chart_axis_set_pattern(lxw_chart_axis axis, lxw_chart_pattern *pattern);
@@ -502,8 +477,6 @@ void chart_axis_minor_gridlines_set_visible(lxw_chart_axis axis, uint8_t visible
 void chart_axis_major_gridlines_set_line(lxw_chart_axis axis, lxw_chart_line *line);
 void chart_axis_minor_gridlines_set_line(lxw_chart_axis axis, lxw_chart_line *line);
 
-void chart_title_set_name(lxw_chart chart, const char *name);
-void chart_title_set_name_range(lxw_chart chart, const char *sheetname, lxw_row_t row, lxw_col_t col);
 void chart_title_set_name_font(lxw_chart chart, lxw_chart_font *font);
 void chart_title_off(lxw_chart chart);
 void chart_legend_set_position(lxw_chart chart, uint8_t position);
@@ -539,7 +512,6 @@ lxw_chart_axis chart_get_y2_axis(lxw_chart chart);
  * Format Functions
  * ============================================================================ */
 
-void format_set_font_name(lxw_format format, const char *font_name);
 void format_set_font_size(lxw_format format, double size);
 void format_set_font_color(lxw_format format, lxw_color_t color);
 void format_set_bold(lxw_format format);
@@ -547,7 +519,6 @@ void format_set_italic(lxw_format format);
 void format_set_underline(lxw_format format, uint8_t style);
 void format_set_font_strikeout(lxw_format format);
 void format_set_font_script(lxw_format format, uint8_t style);
-void format_set_num_format(lxw_format format, const char *num_format);
 void format_set_num_format_index(lxw_format format, uint8_t index);
 void format_set_unlocked(lxw_format format);
 void format_set_hidden(lxw_format format);
@@ -586,8 +557,56 @@ void format_set_color_indexed(lxw_format format, uint8_t value);
 void format_set_font_only(lxw_format format);
 
 /* ============================================================================
+ * Cell/Range Reference Structures (for LabVIEW-compatible functions)
+ * ============================================================================ */
+
+typedef struct lxw_cell_ref {
+    lxw_row_t row;
+    lxw_col_t col;
+} lxw_cell_ref;
+
+typedef struct lxw_col_range {
+    lxw_col_t first_col;
+    lxw_col_t last_col;
+} lxw_col_range;
+
+typedef struct lxw_range_ref {
+    lxw_row_t first_row;
+    lxw_col_t first_col;
+    lxw_row_t last_row;
+    lxw_col_t last_col;
+} lxw_range_ref;
+
+/* ============================================================================
+ * Cell/Range Reference Functions (LabVIEW-compatible alternatives to macros)
+ * ============================================================================ */
+
+/**
+ * Convert an Excel `A1` cell string into row and col values.
+ * Example: lxw_parse_cell("A1", &row, &col);
+ */
+void lxw_parse_cell(const char *cell_str, lxw_row_t *row, lxw_col_t *col);
+
+/**
+ * Convert an Excel `A:B` column range into first_col and last_col values.
+ * Example: lxw_parse_cols("B:D", &first_col, &last_col);
+ */
+void lxw_parse_cols(const char *cols_str, lxw_col_t *first_col, lxw_col_t *last_col);
+
+/**
+ * Convert an Excel `A1:B2` range into row/col values.
+ * Example: lxw_parse_range("A1:K42", &first_row, &first_col, &last_row, &last_col);
+ */
+void lxw_parse_range(const char *range_str, lxw_row_t *first_row, lxw_col_t *first_col, lxw_row_t *last_row, lxw_col_t *last_col);
+
+/* ============================================================================
  * Utility Functions
  * ============================================================================ */
+
+uint32_t lxw_name_to_row(const char *row_str);
+uint16_t lxw_name_to_col(const char *col_str);
+uint32_t lxw_name_to_row_2(const char *row_str);
+uint16_t lxw_name_to_col_2(const char *col_str);
 
 void lxw_version(void);
 const char* lxw_version_id(void);
@@ -595,5 +614,60 @@ const char* lxw_strerror(lxw_error error_num);
 double lxw_datetime_to_excel_datetime(lxw_datetime *datetime);
 int32_t lxw_unixtime_to_excel_date(int64_t unixtime);
 double lxw_unixtime_to_excel_date_epoch(int64_t unixtime, uint8_t is_date_1904);
+
+/* ============================================================================
+ * LabVIEW Wrapper Functions with ANSI to UTF-8 conversion
+ *
+ * These functions automatically convert ANSI-encoded strings to UTF-8.
+ * Use these instead of the standard functions when passing strings from LabVIEW.
+ * File name functions are NOT included - those should use the standard versions.
+ * ============================================================================ */
+
+/* Worksheet write functions */
+lxw_error worksheet_write_string_lv(lxw_worksheet worksheet, lxw_row_t row, lxw_col_t col, const char *string, lxw_format format);
+lxw_error worksheet_write_formula_lv(lxw_worksheet worksheet, lxw_row_t row, lxw_col_t col, const char *formula, lxw_format format);
+lxw_error worksheet_write_url_lv(lxw_worksheet worksheet, lxw_row_t row, lxw_col_t col, const char *url, lxw_format format);
+lxw_error worksheet_write_comment_lv(lxw_worksheet worksheet, lxw_row_t row, lxw_col_t col, const char *string);
+lxw_error worksheet_set_header_lv(lxw_worksheet worksheet, const char *header);
+lxw_error worksheet_set_footer_lv(lxw_worksheet worksheet, const char *footer);
+lxw_error worksheet_merge_range_lv(lxw_worksheet worksheet, lxw_row_t first_row, lxw_col_t first_col, lxw_row_t last_row, lxw_col_t last_col, const char *string, lxw_format format);
+
+/* Chart functions */
+lxw_chart_series chart_add_series_lv(lxw_chart chart, const char *categories, const char *values);
+void chart_series_set_name_lv(lxw_chart_series series, const char *name);
+void chart_axis_set_name_lv(lxw_chart_axis axis, const char *name);
+void chart_title_set_name_lv(lxw_chart chart, const char *name);
+
+/* Format functions */
+void format_set_font_name_lv(lxw_format format, const char *font_name);
+void format_set_num_format_lv(lxw_format format, const char *num_format);
+
+/* Workbook functions (except filenames) */
+lxw_worksheet workbook_add_worksheet_lv(lxw_workbook workbook, const char *sheetname);
+lxw_chartsheet workbook_add_chartsheet_lv(lxw_workbook workbook, const char *sheetname);
+lxw_error workbook_define_name_lv(lxw_workbook workbook, const char *name, const char *formula);
+lxw_worksheet workbook_get_worksheet_by_name_lv(lxw_workbook workbook, const char *name);
+lxw_chartsheet workbook_get_chartsheet_by_name_lv(lxw_workbook workbook, const char *name);
+lxw_error workbook_validate_sheet_name_lv(lxw_workbook workbook, const char *sheetname);
+lxw_error workbook_set_custom_property_string_lv(lxw_workbook workbook, const char *name, const char *value);
+
+/* Worksheet functions */
+void worksheet_set_comments_author_lv(lxw_worksheet worksheet, const char *author);
+
+/* Chartsheet functions */
+lxw_error chartsheet_set_header_lv(lxw_chartsheet chartsheet, const char *header);
+lxw_error chartsheet_set_footer_lv(lxw_chartsheet chartsheet, const char *footer);
+
+/* Additional chart functions */
+void chart_series_set_trendline_name_lv(lxw_chart_series series, const char *name);
+void chart_axis_set_num_format_lv(lxw_chart_axis axis, const char *num_format);
+void chart_series_set_labels_num_format_lv(lxw_chart_series series, const char *num_format);
+
+/* Chart functions with sheetname parameters */
+void chart_series_set_categories_lv(lxw_chart_series series, const char *sheetname, lxw_row_t first_row, lxw_col_t first_col, lxw_row_t last_row, lxw_col_t last_col);
+void chart_series_set_values_lv(lxw_chart_series series, const char *sheetname, lxw_row_t first_row, lxw_col_t first_col, lxw_row_t last_row, lxw_col_t last_col);
+void chart_series_set_name_range_lv(lxw_chart_series series, const char *sheetname, lxw_row_t row, lxw_col_t col);
+void chart_axis_set_name_range_lv(lxw_chart_axis axis, const char *sheetname, lxw_row_t row, lxw_col_t col);
+void chart_title_set_name_range_lv(lxw_chart chart, const char *sheetname, lxw_row_t row, lxw_col_t col);
 
 #endif /* __LIBXLSXWRITER_LV_H__ */

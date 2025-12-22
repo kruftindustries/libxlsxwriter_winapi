@@ -4,10 +4,8 @@
  */
 
 #include "xlsxwriter.h"
-#include <stdio.h>
 
 int main() {
-    printf("=== Secondary Y-Axis Test ===\n\n");
 
     lxw_workbook  *workbook  = workbook_new("test_secondary_axis.xlsx");
     lxw_worksheet *worksheet = workbook_add_worksheet(workbook, "Data");
@@ -38,8 +36,6 @@ int main() {
         worksheet_write_number(worksheet, i + 1, 2, revenue[i], NULL);
     }
 
-    printf("1. Writing test data (8 months, 2 series with different scales)...\n");
-
     /* Add series to primary Y-axis (left side) - Temperature */
     series1 = chart_add_series_on_axis(chart,
                                        "=Data!$A$2:$A$9",
@@ -49,8 +45,6 @@ int main() {
     /* Set series name */
     chart_series_set_name(series1, "=Data!$B$1");
 
-    printf("2. Added primary series (Temperature) to left Y-axis...\n");
-
     /* Add series to secondary Y-axis (right side) - Revenue */
     series2 = chart_add_series_on_axis(chart,
                                        "=Data!$A$2:$A$9",
@@ -59,8 +53,6 @@ int main() {
 
     /* Set series name */
     chart_series_set_name(series2, "=Data!$C$1");
-
-    printf("3. Added secondary series (Revenue) to right Y-axis...\n");
 
     /* Configure chart title */
     chart_title_set_name(chart, "Monthly Temperature vs Revenue");
@@ -84,30 +76,16 @@ int main() {
     /* Configure X-axis */
     chart_axis_set_name(chart->x_axis, "Month");
 
-    printf("4. Configured chart title and axis labels...\n");
 
     /* Insert the chart into the worksheet */
     worksheet_insert_chart(worksheet, CELL("E2"), chart);
 
-    printf("5. Inserted chart into worksheet...\n");
 
     /* Save the workbook */
-    printf("6. Saving workbook...\n");
     lxw_error result = workbook_close(workbook);
 
     if (result == LXW_NO_ERROR) {
         printf("\n✓ SUCCESS! Created test_secondary_axis.xlsx\n\n");
-        printf("Expected files in the XLSX package:\n");
-        printf("  - xl/charts/chart1.xml (main chart definition)\n");
-        printf("  - xl/charts/style1.xml (chart style - NEW!)\n");
-        printf("  - xl/charts/colors1.xml (chart colors - NEW!)\n");
-        printf("  - xl/charts/_rels/chart1.xml.rels (relationships - NEW!)\n");
-        printf("  - [Content_Types].xml (with style/color registrations - NEW!)\n\n");
-        printf("The chart should display:\n");
-        printf("  - Temperature line on left Y-axis (0-30°C range)\n");
-        printf("  - Revenue line on right Y-axis (0-4500k range)\n");
-        printf("  - Both series properly scaled and visible\n\n");
-        printf("Open test_secondary_axis.xlsx in Excel to verify!\n");
         return 0;
     } else {
         printf("\n✗ ERROR creating workbook: %d\n", result);

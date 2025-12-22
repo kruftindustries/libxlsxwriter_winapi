@@ -554,6 +554,11 @@ __attribute__((no_sanitize_address)) int ctest_main(int argc, const char *argv[]
         if (filter(test)) total++;
     }
 
+    /* Variables to track the slowest test */
+    const char* slowest_suite = NULL;
+    const char* slowest_test = NULL;
+    double slowest_time_ms = 0.0;
+
     for (test = ctest_begin; test != ctest_end; test++) {
         if (test == &CTEST_IMPL_TNAME(suite, test)) continue;
         if (filter(test)) {
@@ -566,6 +571,7 @@ __attribute__((no_sanitize_address)) int ctest_main(int argc, const char *argv[]
                 color_print(ANSI_BYELLOW, "[SKIPPED]");
                 num_skip++;
             } else {
+                clock_t test_start = clock();
                 int result = setjmp(ctest_err);
                 if (result == 0) {
                     if (test->setup && *test->setup) (*test->setup)(test->data);
@@ -585,12 +591,25 @@ __attribute__((no_sanitize_address)) int ctest_main(int argc, const char *argv[]
                     color_print(ANSI_BRED, "[FAIL]");
                     num_fail++;
                 }
+                clock_t test_end = clock();
+                double test_time_ms = (double)(test_end - test_start) * 1000.0 / CLOCKS_PER_SEC;
+                if (test_time_ms > slowest_time_ms) {
+                    slowest_time_ms = test_time_ms;
+                    slowest_suite = test->ssname;
+                    slowest_test = test->ttname;
+                }
                 if (ctest_errorsize != MSG_SIZE-1) printf("%s", ctest_errorbuffer);
             }
             idx++;
         }
     }
     clock_t t2 = clock();
+
+    /* Display the slowest test */
+    if (slowest_suite && slowest_test) {
+        printf("========================================== Slowest Test ===========================================\n");
+        printf("  %s:%s: %.4f ms\n\n", slowest_suite, slowest_test, slowest_time_ms);
+    }
 
     const char* color = (num_fail) ? ANSI_BRED : ANSI_GREEN;
     char results[80];
